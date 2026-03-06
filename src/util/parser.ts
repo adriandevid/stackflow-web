@@ -1,40 +1,3 @@
-type InfrastructureComponent = {
-    service_key: string
-    image: string
-    container_name: string
-    entrypoint: string | null
-    command: string | null
-    restart: string          // default 'always'
-    configuration_id: number,
-    commands: any[]
-    ports: { description: string }[]
-    volumes: { description: string }[]
-    networks: { description: string }[]
-    labels: { description: string }[]
-    environments: { description: string }[]
-}
-type Mapper = {
-    [key: string]: string
-}
-
-const data = {
-  string8: {
-    id: 9,
-    image: 'string',
-    container_name: 'string',
-    entrypoint: null,
-    command: null,
-    restart: 'always',
-    configuration_id: 1,
-    commands: [ 'asdasd' ],
-    volumes: [],
-    networks: [],
-    labels: [],
-    environments: [],
-    environment: []
-  }
-}
-
 function parseJsonToYmlStringFormat(json: any, r: string, tabSpaceLevel: number): string {
     var result = r;
 
@@ -62,4 +25,4 @@ function parseJsonToYmlStringFormat(json: any, r: string, tabSpaceLevel: number)
     return result;
 }
 
-console.log(parseJsonToYmlStringFormat(data, "", 1))
+export { parseJsonToYmlStringFormat }
