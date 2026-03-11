@@ -1,6 +1,6 @@
-
 import Database from "better-sqlite3";
 import fs from 'fs';
+import { rm } from 'node:fs/promises'; // Use fs/promises for async/await
 
 if (!fs.existsSync(`./configuration`)) {
     fs.mkdirSync(`./configuration`);
@@ -20,25 +20,173 @@ networks:
     external: false
 `));
 
-if (!fs.existsSync(`./configuration/docker-compose.yml`)) {
-    fs.writeFile(`./configuration/docker-compose.yml`, data, (err) => {
-        if (err) throw err;
-        console.log('The file has been saved!');
-    });
-    console.log(`Folder ./configuration/docker-compose.yml created.`);
+function parseJsonToYmlStringFormat(json: any, r: string, tabSpaceLevel: number): string {
+    var result = r;
+
+    if (Object.keys(json).length > 0 && !Object.keys(json).includes('0')) {
+        Object.keys(json).forEach(key => {
+            if (json[key] != null) {
+                if (Object.keys(json[key]).length > 0 && !Object.keys(json[key]).includes('0')) {
+                    result += `${"  ".repeat(tabSpaceLevel)}${key}: \n`;
+                    result = parseJsonToYmlStringFormat(json[key], result, tabSpaceLevel + 1);
+                } else {
+                    if (Array.isArray(json[key])) {
+                        result += `${"  ".repeat(tabSpaceLevel)}${key}: \n`;
+                        json[key].forEach((x, index) => {
+                            if (typeof (x) == "object") {
+                                result = parseJsonToYmlStringFormat(x, result, tabSpaceLevel + 1);
+                            } else {
+                                var arrayType: string[] = json[key] as string[];
+                                result += `${"  ".repeat(tabSpaceLevel + 1)}- ${arrayType[index]} \n`
+                            }
+                        })
+                    } else {
+                        result += `${"  ".repeat(tabSpaceLevel)}${key}: ${json[key]} \n`;
+                    }
+                }
+            }
+        })
+    }
+
+    return result;
 }
 
+async function buildApplications() {
+    const localdatabase = new Database('./src/infrastructure/database/mydatabase.db', { verbose: console.log });
+    const rows: any[] = localdatabase.prepare("select * from application;").all();
 
-const localdatabase = new Database('./src/infrastructure/database/mydatabase.db', { verbose: console.log });
+    if (fs.existsSync(`./configuration/applications`)) {
+        await rm(`./configuration/applications`, { recursive: true, force: true });
+    }
 
-/*
-    application:
-        port => É a porta do service dentro do cluster
-        node_port => É a porta dentro do container,
-        target_port => É a porta externa aberta para acessar os nodes
-        container_port => É a porta interna em que a aplicação é executada dentro do container (não obrigatório nesta situação)
-*/
-localdatabase.exec(`
+    fs.mkdirSync(`./configuration/applications/`);
+
+    rows.forEach(async (applicationCreatedResult) => {
+        fs.mkdirSync(`./configuration/applications/${applicationCreatedResult.name}`);
+
+        fs.writeFile(`./configuration/applications/${applicationCreatedResult.name}/service.yml`, new Uint8Array(Buffer.from(`
+apiVersion: v1
+kind: Service
+metadata:
+    name: ${applicationCreatedResult.name}-service
+    labels:
+        app: ${applicationCreatedResult.name}
+spec:
+    type: NodePort
+    selector:
+        app: ${applicationCreatedResult.name}  # Replace with your application's label
+    ports:
+        - port: ${applicationCreatedResult.port}        # The port your application listens on internally
+          targetPort: ${applicationCreatedResult.target_port}  # The port within the pod
+          nodePort: ${applicationCreatedResult.node_port}
+          protocol: ${applicationCreatedResult.protocol}
+    `)), (err) => {
+            if (err) throw err;
+            console.log('The file has been saved!');
+        });
+
+        fs.writeFile(`./configuration/applications/${applicationCreatedResult.name}/deployment.yml`, new Uint8Array(Buffer.from(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${applicationCreatedResult.name}-deployment
+  labels:
+    app: ${applicationCreatedResult.name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${applicationCreatedResult.name}
+  template:
+    metadata:
+      labels:
+        app: ${applicationCreatedResult.name}
+    spec:
+      containers:
+        - name: ${applicationCreatedResult.container_name}
+          image: ${applicationCreatedResult.image}
+          imagePullPolicy: ${applicationCreatedResult.image_pull_policy}
+      imagePullSecrets:
+        - name: myregistrykey
+    `)), (err) => {
+            if (err) throw err;
+            console.log('The file has been saved!');
+        });
+    })
+}
+
+async function buildInfrastructureComponents() {
+    const localdatabase = new Database('./src/infrastructure/database/mydatabase.db', { verbose: console.log });
+    const infrastructureComponents: any[] = localdatabase.prepare(`select * from infrastructure_component`).all();
+
+    infrastructureComponents.forEach(async (lastInfrastructureComponentQueryResult) => {
+        lastInfrastructureComponentQueryResult.commands = localdatabase.prepare(`select * from infrastructure_component_command where infrastructure_component_id = ${lastInfrastructureComponentQueryResult.id}`).all();
+        lastInfrastructureComponentQueryResult.ports = localdatabase.prepare(`select * from infrastructure_component_port where infrastructure_component_id = ${lastInfrastructureComponentQueryResult.id}`).all();
+        lastInfrastructureComponentQueryResult.volumes = localdatabase.prepare(`select * from infrastructure_component_volumes where infrastructure_component_id = ${lastInfrastructureComponentQueryResult.id}`).all();
+        lastInfrastructureComponentQueryResult.labels = localdatabase.prepare(`select * from infrastructure_component_labels where infrastructure_component_id = ${lastInfrastructureComponentQueryResult.id}`).all();
+        lastInfrastructureComponentQueryResult.environments = localdatabase.prepare(`select * from infrastructure_component_environment where infrastructure_component_id = ${lastInfrastructureComponentQueryResult.id}`).all();
+
+        //ajuste de montagem para a geração de documento
+        var templateDocumentJson: any = {
+            [lastInfrastructureComponentQueryResult.service_key]: {
+                ...lastInfrastructureComponentQueryResult,
+                ports: lastInfrastructureComponentQueryResult.ports != undefined ? lastInfrastructureComponentQueryResult.ports.map((x: any) => x.port_bind) : [],
+                commands: lastInfrastructureComponentQueryResult.commands != undefined ? lastInfrastructureComponentQueryResult.commands.map((x: any) => x.command) : [],
+                environments: lastInfrastructureComponentQueryResult.environments != undefined ? lastInfrastructureComponentQueryResult.environments.map((x: any) => ({
+                    [x.environment_name]: x.environment_value
+                })) : [],
+                labels: lastInfrastructureComponentQueryResult.labels != undefined ? lastInfrastructureComponentQueryResult.labels.map((x: any) => x.label) : [],
+                networks: lastInfrastructureComponentQueryResult.networks != undefined ? lastInfrastructureComponentQueryResult.networks.map((x: any) => x.network) : [],
+                volumes: lastInfrastructureComponentQueryResult.volumes != undefined ? lastInfrastructureComponentQueryResult.volumes.map((x: any) => x.volume) : []
+            }
+        }
+
+        delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["service_key"]
+        delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["id"]
+        delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["configuration_id"]
+        delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["position_x"]
+        delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["position_y"]
+        delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["type"]
+
+        var ymlDocumentResult = parseJsonToYmlStringFormat(templateDocumentJson, "", 1)
+
+        fs.readFile("./configuration/docker-compose.yml", async (err, content) => {
+            if (err) throw err;
+
+            const decoder = new TextDecoder('utf-8');
+            const str = decoder.decode(data.buffer);
+
+            var result = str;
+            result = result.replace("#[content]", `
+#start ${lastInfrastructureComponentQueryResult.service_key}
+${ymlDocumentResult}
+#end ${lastInfrastructureComponentQueryResult.service_key}
+#[content]
+        `)
+            await fs.writeFile("./configuration/docker-compose.yml", new Uint8Array(Buffer.from(result)), (err) => {
+                if (err) throw err;
+                console.log('The file has been saved!');
+            });
+        });
+    })
+}
+
+fs.writeFile(`./configuration/docker-compose.yml`, data, (err) => {
+    if (err) throw err;
+    console.log('The file has been saved!');
+});
+
+if (!fs.existsSync(`./src/infrastructure/database/mydatabase.db`)) {
+    const localdatabase = new Database('./src/infrastructure/database/mydatabase.db', { verbose: console.log });
+
+    /*
+        application:
+            port => É a porta do service dentro do cluster
+            node_port => É a porta dentro do container,
+            target_port => É a porta externa aberta para acessar os nodes
+            container_port => É a porta interna em que a aplicação é executada dentro do container (não obrigatório nesta situação)
+    */
+    localdatabase.exec(`
     drop table if exists application;
     drop table if exists application_files;
     drop table if exists configuration;
@@ -155,4 +303,8 @@ localdatabase.exec(`
     where not exists (
         select 1 from configuration c where c.id = 1
     );
-`);
+    `);
+} else {
+    buildApplications();
+    buildInfrastructureComponents();
+}

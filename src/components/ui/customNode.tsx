@@ -6,7 +6,7 @@ export default function CustomNode({ node, isSelected, onClick, onDrag, onStartC
   const { id, type, data, position } = node;
   const isDragging = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
-console.log(node)
+  
   const getIcon = () => {
     if (type === 'container') return <Box size={16} className="text-cyan-400" />;
     if (type === 'service') return <Server size={16} className="text-blue-600" />;

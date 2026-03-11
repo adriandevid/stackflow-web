@@ -1,3 +1,4 @@
+
 import Home from "@pedreiro-web/components/home";
 import { localdatabase } from "@pedreiro-web/infrastructure/database/config";
 import { Edge } from "@pedreiro-web/infrastructure/repository/types";

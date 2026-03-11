@@ -1,28 +1,6 @@
 
 services:
-
-
-#start dasdas
-  dasdas: 
-    image: sda 
-    container_name: asdasdaasd 
-    entrypoint: asdas 
-    command: sadadsda 
-    type: db 
-    position_x: 305.41415402026416 
-    position_y: 239.14100824826625 
-    restart: always 
-    commands: 
-    ports: 
-      - 8080:30002 
-    volumes: 
-    networks: 
-    labels: 
-    environments: 
-
-#end dasdas
 #[content]
-        
 networks:
   web:
     external: false

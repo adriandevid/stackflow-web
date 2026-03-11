@@ -35,7 +35,8 @@ import {
     AlertTriangle,
     UploadCloud,
     FileText,
-    Trash2
+    Trash2,
+    LogOut
 } from 'lucide-react';
 import domtoimage from "dom-to-image-more";
 import { domToPng } from 'modern-screenshot';
@@ -51,6 +52,7 @@ import UpdateInfrastructureComponent from '@pedreiro-web/app/actions/infrastruct
 import { useRouter } from 'next/navigation';
 import DeleteInfrastructureComponent from '@pedreiro-web/app/actions/infrastructure-component/delete';
 import UpdateApplication from '@pedreiro-web/app/actions/application/update';
+import DeleteApplication from '@pedreiro-web/app/actions/application/delete';
 
 // --- Aplicação Principal ---
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = 'info' }: any) => {
@@ -75,6 +77,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = 
                         Cancelar
                     </button>
                     <button
+                        type='button'
                         onClick={() => { onConfirm(); onClose(); }}
                         className={`flex-1 px-4 py-3 text-sm font-bold transition-colors ${type === 'warning' ? 'text-amber-600 hover:bg-amber-50' : 'text-cyan-600 hover:bg-cyan-50'
                             }`}
@@ -360,6 +363,8 @@ export default function Home({
 
     const [stateApplication, formActionApplication, pendingCreateApplication] = useActionState(Create, { status: 200 });
     const [stateApplicationUpdate, formActionApplicationUpdate, pendingUpdateApplication] = useActionState(UpdateApplication, { status: 200 });
+    const [stateApplicationDelete, formActionApplicationDelete, pendingDeleteApplication] = useActionState(DeleteApplication, { status: 200 });
+
     const [stateCreateInfrastructureComponent, formActionInfrastructureComponent, pendingCreateInfrastructureComponent] = useActionState(CreateInfrastructureComponent, { status: 200 });
     const [stateUpdateInfrastructureComponent, formActionUpdateInfrastructureComponent, pendingUpdateInfrastructureComponent] = useActionState(UpdateInfrastructureComponent, { status: 200 });
     const [stateDeleteInfrastructureComponent, formActionDeleteInfrastructureComponent, pendingDeleteInfrastructureComponent] = useActionState(DeleteInfrastructureComponent, { status: 200 });
@@ -370,6 +375,7 @@ export default function Home({
             type: "NodePort",
             protocol: "TCP",
             replicas: "1",
+            files: [],
             image_pull_policy: 'Always',
             position_x: 200 + Math.random() * 200,
             position_y: 200 + Math.random() * 100
@@ -552,6 +558,13 @@ export default function Home({
     }, [stateDeleteInfrastructureComponent])
 
     useEffect(function () {
+        if (stateApplicationDelete.status == 200 && stateApplicationDelete.data) {
+            showNotify(`Serviço ${stateApplicationDelete.data.name} excluido!`);
+            router.refresh();
+        }
+    }, [stateApplicationDelete])
+
+    useEffect(function () {
         if (stateApplication.status == 200) {
             setShowAddModal(false);
 
@@ -670,12 +683,21 @@ export default function Home({
     }, [stateApplicationUpdate])
 
     const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false); // Estado para o modal de confirmação
+
     const handleSyncCluster = () => {
-        startTransition(() => {
-            formActionDeleteInfrastructureComponent({
-                id: selectedNode.code
+        if (selectedNode.id.includes("infra")) {
+            startTransition(() => {
+                formActionDeleteInfrastructureComponent({
+                    id: selectedNode.code
+                });
             });
-        });
+        } else {
+            startTransition(() => {
+                formActionApplicationDelete({
+                    id: selectedNode.code
+                });
+            });
+        }
     };
 
     const fileToBase64 = (file: File) => {
@@ -695,9 +717,6 @@ export default function Home({
     const fileInputRef = useRef<any>(null);
     const fileInputUpdateRef = useRef<any>(null);
 
-    const [attachedFiles, setAttachedFiles] = useState<any>([]);
-    const [attachedFilesUpdate, setAttachedFilesUpdate] = useState<any>([]);
-
     const handleFileChange = async (e: any) => {
         const files: File[] = Array.from(e.target.files);
         const applicationFiles: ApplicationFileCreate[] = [];
@@ -711,9 +730,7 @@ export default function Home({
             });
         }
 
-        propsFormCreateApplication.setValue("files", applicationFiles);
-
-        setAttachedFiles((prev: any) => [...prev, ...files]);
+        propsFormCreateApplication.setValue("files", [...propsFormCreateApplication.watch("files"), ...applicationFiles]);
         // Limpa o input para permitir selecionar o mesmo arquivo novamente se necessário
         e.target.value = '';
     };
@@ -736,18 +753,18 @@ export default function Home({
             ...applicationFiles
         ]);
 
-        setAttachedFiles((prev: any) => [...prev, ...files]);
-        // Limpa o input para permitir selecionar o mesmo arquivo novamente se necessário
         e.target.value = '';
     };
 
     const removeFile = (index: number) => {
-        setAttachedFiles((prev: any) => prev.filter((_: any, i: number) => i !== index));
         propsFormUpdateApplication.setValue("files", propsFormUpdateApplication.watch("files").filter((x, indexFile) => indexFile != index));
     };
 
     return (
-        <div className="flex h-screen w-full bg-slate-50 overflow-hidden font-sans text-slate-900 select-none">
+        <div
+
+            className="flex h-screen w-full bg-slate-50 overflow-hidden font-sans text-slate-900 select-none animate-in animate-fade-in duration-700"
+        >
             {/* Notificação Toast */}
             {notification && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[10000] bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -763,6 +780,7 @@ export default function Home({
                 message="Esta ação irá remover o recurso de todos os manifestos YAML e reiniciar os serviços modificados. Deseja continuar?"
                 type="warning"
             />
+
             {
                 showEditInfrastructureModal && (
                     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1560,9 +1578,9 @@ export default function Home({
                                             </div>
 
                                             {/* Lista de Ficheiros Anexados */}
-                                            {attachedFiles.length > 0 && (
+                                            {propsFormCreateApplication.watch("files").length > 0 && (
                                                 <div className="grid grid-cols-1 gap-2 mt-3 animate-in fade-in slide-in-from-top-2">
-                                                    {attachedFiles.map((file: any, idx: number) => (
+                                                    {propsFormCreateApplication.watch("files").map((file: any, idx: number) => (
                                                         <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl group hover:border-slate-200 transition-all">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="p-2 bg-white rounded-lg shadow-sm">
@@ -1665,6 +1683,11 @@ export default function Home({
                             className="w-full py-3 cursor-pointer bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-xl font-bold flex items-center justify-center gap-2 border border-slate-700/50 transition-colors"
                         >
                             <Plus size={18} /> Adicionar Serviço
+                        </button>
+                    </div>
+                    <div className="p-4 border-t border-slate-800">
+                        <button className="w-full py-3 cursor-pointer text-slate-500 hover:text-red-400 hover:bg-red-500/5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all">
+                            <LogOut size={16} /> Sair do Terminal
                         </button>
                     </div>
                 </div>
@@ -1800,11 +1823,7 @@ export default function Home({
                                         </h3>
                                         <div className='flex flex-row gap-2'>
                                             <button onClick={() => {
-                                                if (selectedNode.id.includes("infra")) {
-                                                    setShowConfirmModal(true);
-                                                } else {
-
-                                                }
+                                                setShowConfirmModal(true);
                                             }} className="p-1 hover:bg-red-100 rounded-full cursor-pointer text-red-400"><Trash size={20} /></button>
                                             <button onClick={() => setSelectedNodeId(null)} className="p-1 hover:bg-slate-100 rounded-full cursor-pointer text-slate-400"><X size={20} /></button>
                                         </div>
@@ -1916,13 +1935,6 @@ export default function Home({
             </main>
 
             {/* Estilos Globais */}
-            <style>{`
-        @keyframes dash {
-          to { stroke-dashoffset: -100; }
-        }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .select-none { user-select: none; }
-      `}</style>
         </div>
     );
 }

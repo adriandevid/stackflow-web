@@ -22,3 +22,38 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.select-none {
+  user-select: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.cursor-crosshair {
+  cursor: crosshair;
+}
+
+@keyframes animation-content {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: animation-content 0.5s ease-out;
+}
