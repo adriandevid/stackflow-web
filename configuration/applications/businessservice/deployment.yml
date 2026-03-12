@@ -2,22 +2,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: 324234-deployment
+  name: businessservice-deployment
   labels:
-    app: 324234
+    app: businessservice
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: 324234
+      app: businessservice
   template:
     metadata:
       labels:
-        app: 324234
+        app: businessservice
     spec:
       containers:
-        - name: 234234234234234
-          image: 23423
+        - name: businessservice
+          image: 212.85.1.77:5000/businessservice:latest
           imagePullPolicy: Always
       imagePullSecrets:
         - name: myregistrykey
