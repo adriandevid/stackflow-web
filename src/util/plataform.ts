@@ -38,19 +38,22 @@ export async function getLocalMemoryInformationsLinux(defaultValue?: string | un
                 size: parseInt(selectedDisck[1].replaceAll(" ", ""))
             })
         } else {
-            exec("lsblk -d -o NAME,SIZE", (error, stdout, stderr) => {
+            exec("df -h", (error, stdout, stderr) => {
                 if (error) {
                     reject(`exec error: ${error}`);
                     return;
                 }
 
                 const selectedDisck = stdout
-                    .replace(/^NAME.*\n/, '')
-                    .split(/(?=^[a-z]+\d+)/gm)
-                    .filter(x => x.includes("sda "))[0].split(/(\\S+)/);
+                    .replace(/^Filesystem.*\n/gm, '')
+                    .split(/(?=^[a-z]+\d+)/gm)[0]
+                    .split("\n")
+                    .filter(x => x.includes(`${process.env.MEMORY_NAME} `))[0]
+                    .split(/(\S+)/gm).filter(x => !x.includes(" ") && x != "");
 
                 resolve({
-                    size: parseInt(selectedDisck[1].replaceAll(" ", ""))
+                    size: parseInt(selectedDisck[1].replaceAll(" ", "").replaceAll("G", "")) * 1000000000,
+                    freeSpace: parseInt(selectedDisck[3].replaceAll(" ", "").replaceAll("G", "")) * 1000000000
                 })
             })
         }

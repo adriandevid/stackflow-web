@@ -34,9 +34,9 @@ export default async function App() {
   if(platform== "win32") {
     memory = await getLocalMemoryInformations();
   } 
-  // else {
-  //   memory = await getLocalMemoryInformationsLinux();
-  // }
+  else {
+    memory = await getLocalMemoryInformationsLinux();
+  }
 
   return (<Home computerMemory={memory} edgesSource={edgesResult} applicationsSource={applicationsResult} infrastructureComponentsSource={infrastructureComponents}></Home>)
 }

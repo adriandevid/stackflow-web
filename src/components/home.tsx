@@ -39,7 +39,8 @@ import {
     LogOut,
     GripVertical,
     Menu,
-    CardSim
+    CardSim,
+    Code
 } from 'lucide-react';
 import domtoimage from "dom-to-image-more";
 import { domToPng } from 'modern-screenshot';
@@ -812,6 +813,7 @@ export default function Home({
     const [showContentDetails, setShowContentDetails] = useState<boolean>(false);
     const [activedSelectNode, activeSelectNode] = useState<boolean>(false);
     const [scaleMap, setScaleMap] = useState<number>(1.0);
+    const [showOptionsOfDeployment, setShowOptionsOfDeployment] = useState<boolean>(false);
 
     return (
         <div
@@ -1733,7 +1735,7 @@ export default function Home({
                     <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-xs">
                         <div className="flex justify-between items-center mb-2 text-slate-400">
                             <span className="flex items-center gap-1.5"><CardSim size={12} /> Memória Total</span>
-                            <span className="text-cyan-400 font-bold">{((computerMemory.size / 1000000) * 0.001).toFixed(1)}gb</span>
+                            <span className="text-cyan-400 font-bold">{computerMemory.freeSpace ? ((computerMemory.size / 1000000) * 0.001).toFixed(1) : computerMemory.size}gb</span>
                         </div>
                         <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
                             <div style={{
@@ -1782,9 +1784,9 @@ export default function Home({
                         </div>
                         {
                             process.env.NEXT_PUBLIC_ENVIRONMENT == "staging" ?
-                            <div className="flex items-center gap-2 bg-cyan-50 px-3 py-1 rounded-full text-[11px] font-bold text-cyan-600 border border-cyan-100 uppercase tracking-tighter">
-                               <Globe size={12} /> ENVIRONMENT: staging
-                            </div> : <></>
+                                <div className="flex items-center gap-2 bg-cyan-50 px-3 py-1 rounded-full text-[11px] font-bold text-cyan-600 border border-cyan-100 uppercase tracking-tighter">
+                                    <Globe size={12} /> ENVIRONMENT: staging
+                                </div> : <></>
                         }
                     </div>
                     <div className="flex items-center gap-3">
@@ -1866,7 +1868,11 @@ export default function Home({
                                 <Minus size={20} />
                             </button>
                             <button
-                                onClick={() => activeSelectNode(!activedSelectNode)}
+                                onClick={() => {
+                                    setSelectedNodeId(null);
+                                    setShowContentDetails(false);
+                                    activeSelectNode(!activedSelectNode);
+                                }}
                                 type={'button'}
                                 className={cn(
                                     "p-2 shadow-xl border border-slate-200 rounded-lg transition-transform cursor-pointer",
@@ -1896,7 +1902,7 @@ export default function Home({
                         </div>
                     </div>
                     {/* Sidebar de Detalhes / Editor */}
-                    <div ref={contentDetailsRef} style={{ width: "800px" }} data-width={containerResizePositionMove ? containerResizePositionMove.x : 800} hidden={!showContentDetails || !activedSelectNode} className={`relative border-l border-slate-200 bg-white flex flex-col shadow-2xl z-20 transform transition-transform duration-300 animate-fade-in-slide`}>
+                    <div ref={contentDetailsRef} style={{ width: "800px" }} data-width={containerResizePositionMove ? containerResizePositionMove.x : 800} hidden={!showContentDetails} className={`relative border-l border-slate-200 bg-white flex flex-col shadow-2xl z-20 transform transition-transform duration-300 animate-fade-in-slide`}>
                         <div
                             className='bg-transparent w-5 hover:bg-gray-100 h-full absolute z-[1000] flex justify-center items-center cursor-col-resize text-transparent hover:text-black'
                             ref={containerResizeRef}
@@ -1981,8 +1987,15 @@ export default function Home({
                                         </div>
 
                                         <div className="pt-4 border-t border-slate-100">
-                                            <button className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-colors">
+                                            {/* <button className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-colors">
                                                 <Terminal size={18} /> Abrir Terminal de Node
+                                            </button> */}
+                                            <button
+                                                // onClick={() => setShowManifestModal(selectedNode.id)}
+                                                className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-colors cursor-pointer"
+                                            >
+                                                <Code size={18} className="text-cyan-400" />
+                                                Gerar Deployment
                                             </button>
                                             <button type='button' onClick={async () => {
                                                 if (selectedNode.id.includes("infra")) {
@@ -2006,8 +2019,8 @@ export default function Home({
 
                                                     setShowEditAppplicationModal(true);
                                                 }
-                                            }} className="w-full py-3 border mt-2 cursor-pointer border-slate-900 text-slate-900 rounded-xl font-bold flex items-center justify-center gap-2 hover:text-white hover:bg-slate-900 transition-colors">
-                                                <Edit size={18} /> Editar Nó
+                                            }} className="w-full py-3 border mt-2 cursor-pointer border-slate-900 text-slate-900 rounded-xl font-bold flex items-center cursor-pointer justify-center gap-2 hover:text-white hover:bg-slate-900 transition-colors">
+                                                <Edit size={18} /> Editar Serviço
                                             </button>
                                         </div>
                                     </div>
