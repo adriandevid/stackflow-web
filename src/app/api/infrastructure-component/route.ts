@@ -30,8 +30,8 @@ async function POST(request: NextRequest) {
     }
 
     localdatabase.exec(normalizeQuery(`
-        insert into infrastructure_component(service_key, image, container_name, entrypoint, command, position_x, position_y, restart, configuration_id)
-        values ('${body.service_key}', '${body.image}', '${body.container_name}', '${body.entrypoint}', '${body.command}', ${body.position_x}, ${body.position_y}, ${body.restart}, 1)
+        insert into infrastructure_component(service_key, image, container_name, entrypoint, command, position_x, position_y, restart, alive, configuration_id)
+        values ('${body.service_key}', '${body.image}', '${body.container_name}', '${body.entrypoint}', '${body.command}', ${body.position_x}, ${body.position_y}, ${body.restart}, false, 1)
     `))
 
     const lastInfrastructureComponentQuery = localdatabase.prepare("select * from infrastructure_component order by id desc limit 1").all();

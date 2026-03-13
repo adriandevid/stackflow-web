@@ -16,8 +16,8 @@ export default async function CreateInfrastructureComponent (prev: any, body: In
     }
 
     localdatabase.exec(normalizeQuery(`
-        insert into infrastructure_component(service_key, image, container_name, entrypoint, command, position_x, position_y, type, configuration_id)
-        values ('${body.service_key}', '${body.image}', '${body.container_name}', '${body.entrypoint}', '${body.command}', ${body.position_x}, ${body.position_y}, '${body.type}', 1)
+        insert into infrastructure_component(service_key, image, container_name, entrypoint, command, position_x, position_y, type, alive, configuration_id)
+        values ('${body.service_key}', '${body.image}', '${body.container_name}', '${body.entrypoint}', '${body.command}', ${body.position_x}, ${body.position_y}, '${body.type}', false, 1)
     `))
 
     const lastInfrastructureComponentQuery = localdatabase.prepare("select * from infrastructure_component order by id desc limit 1").all();
@@ -116,6 +116,7 @@ export default async function CreateInfrastructureComponent (prev: any, body: In
     delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["position_x"]
     delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["position_y"]
     delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["type"]
+    delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["alive"]
 
     var ymlDocumentResult = parseJsonToYmlStringFormat(templateDocumentJson, "", 1)
 

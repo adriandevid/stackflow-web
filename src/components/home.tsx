@@ -60,6 +60,7 @@ import DeleteApplication from '@pedreiro-web/app/actions/application/delete';
 import Signout from '@pedreiro-web/app/actions/authentication/signout';
 import { cn } from '@pedreiro-web/util/tailwindmerge';
 import { MemoryInformations } from '@pedreiro-web/util/plataform';
+import BuildInfrastructureComponent from '@pedreiro-web/app/actions/infrastructure-component/build';
 
 // --- Aplicação Principal ---
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = 'info' }: any) => {
@@ -387,6 +388,8 @@ export default function Home({
 
     const [stateSignout, formSignout, pendingSignout] = useActionState(Signout, {});
 
+    const [stateBuildInfrastructureComponent, formActionBuildInfrastructureComponent, pendingBuildInfrastructureComponent] = useActionState(BuildInfrastructureComponent, undefined);
+
     const propsFormCreateApplication = useForm<ApplicationCreate>({
         resolver: zodResolver(ApplicationValidator),
         defaultValues: {
@@ -429,10 +432,10 @@ export default function Home({
 
     const typesInfrastructureComponent: any = {
         "db": "database",
-        "mq": "database",
-        "redis": "database"
+        "mq": "service",
+        "redis": "database",
+        "sftr": "service" // software resource
     }
-
 
     useEffect(function () {
         setEdges(edgesSource.map(edge => {
@@ -450,6 +453,7 @@ export default function Home({
                 // Se for WEB, usa 'container' (estilo escuro do Backend API)
                 type: typesInfrastructureComponent[result.type],
                 code: result.id,
+                status: result.alive,
                 data: {
                     label: result.service_key,
                     image: result.image,
@@ -463,6 +467,7 @@ export default function Home({
             ...applicationsSource.map(result => ({
                 id: `node-${result.name.toLowerCase().replace(/\s+/g, '-')}`,
                 code: result.id,
+                status: false,
                 // Se for WEB, usa 'container' (estilo escuro do Backend API)
                 // type: state.data.type === 'web' ? 'container' : 'database',
                 type: "container",
@@ -520,6 +525,7 @@ export default function Home({
                     // Se for WEB, usa 'container' (estilo escuro do Backend API)
                     type: typesInfrastructureComponent[stateCreateInfrastructureComponent.data.type],
                     code: stateCreateInfrastructureComponent.data.id,
+                    status: false,
                     data: {
                         label: stateCreateInfrastructureComponent.data.service_key,
                         image: stateCreateInfrastructureComponent.data.image,
@@ -595,6 +601,7 @@ export default function Home({
                     // Se for WEB, usa 'container' (estilo escuro do Backend API)
                     // type: state.data.type === 'web' ? 'container' : 'database',
                     code: stateApplication.data.id,
+                    status: false,
                     type: "container",
                     data: {
                         label: stateApplication.data.name,
@@ -813,7 +820,25 @@ export default function Home({
     const [showContentDetails, setShowContentDetails] = useState<boolean>(false);
     const [activedSelectNode, activeSelectNode] = useState<boolean>(false);
     const [scaleMap, setScaleMap] = useState<number>(1.0);
-    const [showOptionsOfDeployment, setShowOptionsOfDeployment] = useState<boolean>(false);
+
+    // const [executingBuild, executeBuild] = useState<boolean>(false);
+    const [localLogOfBuild, setLocalLogOfBuild] = useState<string>("");
+
+    const buildInfrastructureComponent = async () => {
+        setIsDeploying(true);
+        startTransition(function () {
+            formActionBuildInfrastructureComponent(selectedNode.code);
+        })
+    }
+
+    useEffect(function () {
+        if (stateBuildInfrastructureComponent && stateBuildInfrastructureComponent.status == 200) {
+            console.log(stateBuildInfrastructureComponent)
+            setLocalLogOfBuild(localLogOfBuild + "\n" + stateBuildInfrastructureComponent.container.log);
+            setIsDeploying(false);
+            router.refresh();
+        }
+    }, [stateBuildInfrastructureComponent])
 
     return (
         <div
@@ -1286,6 +1311,7 @@ export default function Home({
                                             <option value="db">Banco de Dados (SQL/NoSQL)</option>
                                             <option value="redis">Cache (Redis/In-memory)</option>
                                             <option value="mq">Mensageria (RabbitMQ/Kafka)</option>
+                                            <option value="sftr">Software Resource</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1">
@@ -1991,11 +2017,14 @@ export default function Home({
                                                 <Terminal size={18} /> Abrir Terminal de Node
                                             </button> */}
                                             <button
-                                                // onClick={() => setShowManifestModal(selectedNode.id)}
+                                                onClick={() => {
+                                                    buildInfrastructureComponent();
+                                                }}
+                                                disabled={isDeploying}
                                                 className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-colors cursor-pointer"
                                             >
-                                                <Code size={18} className="text-cyan-400" />
-                                                Gerar Deployment
+                                                {isDeploying ? <RefreshCw size={16} className="animate-spin" /> : <Code size={16} className="text-cyan-400" />}
+                                                {isDeploying ? 'Deploying...' : 'Deploy'}
                                             </button>
                                             <button type='button' onClick={async () => {
                                                 if (selectedNode.id.includes("infra")) {
@@ -2059,7 +2088,16 @@ export default function Home({
                                     <>
                                         <p className="text-slate-500 opacity-80 italic"># Aguardando comandos...</p>
                                         <p className="flex gap-2"><span>[14:22:01]</span> <span className="text-slate-500">Ambiente de Produção carregado.</span></p>
-                                        {selectedNode && <p className="flex gap-2 text-cyan-500"><span>[14:25:42]</span> Node selecionado: {selectedNode.data.label}</p>}
+                                        {
+                                            localLogOfBuild.length > 0 ?
+                                              localLogOfBuild.includes("\n") ?
+                                              localLogOfBuild.split("\n").filter(x => x.length > 0).map((x, index) => (
+                                                <div key={index}><p className="flex gap-2 text-cyan-500"><span>{`[${new Date().toLocaleDateString()}]`}</span>{x}</p></div>
+                                              )) :
+                                                <p className="flex gap-2 text-cyan-500"><span>{`[${new Date().getTime()}]`}</span> {localLogOfBuild}</p>:
+                                            <></>
+                                        }
+                                        {/* {(localLogOfBuild.length > 0) && <p className="flex gap-2 text-cyan-500"><span>[14:25:42]</span> {localLogOfBuild.includes("\n") ? localLogOfBuild.split("\n").map(x => (<>{x} <br/></>)): localLogOfBuild}</p>} */}
                                     </>
                                 )}
                                 <p className="text-slate-500 animate-pulse">_</p>

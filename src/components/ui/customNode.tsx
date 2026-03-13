@@ -3,7 +3,7 @@ import { useRef } from "react";
 import StatusBadge from "./statusBadge";
 
 export default function CustomNode({ node, isSelected, onClick, activeSelectNode, onDrag, onStartConnect, onEndConnect }: any) {
-  const { id, type, data, position } = node;
+  const { id, type, data, position, status } = node;
   const isDragging = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
   
@@ -64,14 +64,14 @@ export default function CustomNode({ node, isSelected, onClick, activeSelectNode
       }}
       className={`absolute cursor-move p-3 rounded-xl border-2 shadow-lg min-w-[180px] group select-none ${themes[type]} ${isSelected && activeSelectNode ? 'ring-4 ring-cyan-500/30 z-20 scale-105' : 'hover:border-slate-400 z-10'}`}
     >
-      <div className="flex items-center justify-between mb-2 pointer-events-none">
+      <div className="flex items-center justify-between mb-2 pointer-events-none gap-4">
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded-lg ${type === 'container' ? 'bg-slate-700' : 'bg-white/80 shadow-sm'}`}>
             {getIcon()}
           </div>
           <span className="text-xs font-bold uppercase tracking-tight">{data.label}</span>
         </div>
-        <StatusBadge active={true} />
+        <StatusBadge active={status} />
       </div>
 
       <div className={`text-[10px] font-mono mt-2 p-1.5 rounded pointer-events-none ${type === 'container' ? 'bg-black/20 text-cyan-200' : 'bg-slate-100 text-slate-500'}`}>

@@ -29,7 +29,7 @@ async function PUT(request: NextRequest, { params }: { params: Promise<{ id: num
     localdatabase.exec(`
         UPDATE infrastructure_component
         SET service_key = '${body.service_key}', image = '${body.image}', container_name= '${body.container_name}',
-        entrypoint = '${body.entrypoint}', command = '${body.command}', restart = '${body.restart}'
+        entrypoint = '${body.entrypoint}', command = '${body.command}', restart = '${body.restart}', alive = ${body.alive}
         WHERE id = ${id};
     `)
 

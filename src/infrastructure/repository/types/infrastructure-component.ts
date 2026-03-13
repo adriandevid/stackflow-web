@@ -19,6 +19,7 @@ export type InfrastructureComponent = {
   networks: InfrastructureComponentNetwork[]
   labels: InfrastructureComponentLabel[]
   environments: InfrastructureComponentEnvironment[]
+  alive: boolean
 }
 
 

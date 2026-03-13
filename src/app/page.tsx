@@ -28,7 +28,7 @@ export default async function App() {
     infrastructureComponent.environments = localdatabase.prepare(`select * from infrastructure_component_environment where infrastructure_component_id = ${infrastructureComponent.id}`).all() as InfrastructureComponentEnvironment[];
   })
 
-  // console.log(totalmem(), freemem(), memoryUsage())
+  // console.log(totalmem(), freemem(), memoryUsage());
 
   var memory: MemoryInformations = { size: 0 }
   if(platform== "win32") {

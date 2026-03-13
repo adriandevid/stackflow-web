@@ -1,6 +1,18 @@
 
 services:
+
+#start rabbit
+  rabbit: 
+    image: rabbitmq:4.0-management 
+    container_name: rabbit 
+    restart: always 
+    ports: 
+      - 5672:5672 
+      - 15672:15672 
+
+#end rabbit
 #[content]
+        
 networks:
   web:
     external: false

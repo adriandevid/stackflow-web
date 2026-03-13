@@ -9,17 +9,23 @@ function parseJsonToYmlStringFormat(json: any, r: string, tabSpaceLevel: number)
                     result = parseJsonToYmlStringFormat(json[key], result, tabSpaceLevel + 1);
                 } else {
                     if (Array.isArray(json[key])) {
-                        result += `${"  ".repeat(tabSpaceLevel)}${key}: \n`;
-                        json[key].forEach((x, index) => {
-                            if(typeof(x) == "object") {
-                                result = parseJsonToYmlStringFormat(x, result, tabSpaceLevel + 1);
-                            } else {
-                                var arrayType: string[] = json[key] as string[];
-                                result += `${"  ".repeat(tabSpaceLevel + 1)}- ${arrayType[index]} \n`
-                            }
-                        })
+                        if (json[key].length > 0) {
+                            result += `${"  ".repeat(tabSpaceLevel)}${key}: \n`;
+                            json[key].forEach((x, index) => {
+                                if (typeof (x) == "object") {
+                                    result = parseJsonToYmlStringFormat(x, result, tabSpaceLevel + 1);
+                                } else {
+                                    var arrayType: string[] = json[key] as string[];
+                                    result += `${"  ".repeat(tabSpaceLevel + 1)}- ${arrayType[index]} \n`
+                                }
+                            })
+                        }
                     } else {
-                        result += `${"  ".repeat(tabSpaceLevel)}${key}: ${json[key]} \n`;
+                        if(typeof(json[key]) == "string" && json[key].replaceAll(" ", "").length > 0) {
+                            result += `${"  ".repeat(tabSpaceLevel)}${key}: ${json[key]} \n`;
+                        } else if (typeof(json[key]) =="number") {
+                            result += `${"  ".repeat(tabSpaceLevel)}${key}: ${json[key]} \n`;
+                        }
                     }
                 }
             }

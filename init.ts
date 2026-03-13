@@ -31,17 +31,23 @@ function parseJsonToYmlStringFormat(json: any, r: string, tabSpaceLevel: number)
                     result = parseJsonToYmlStringFormat(json[key], result, tabSpaceLevel + 1);
                 } else {
                     if (Array.isArray(json[key])) {
-                        result += `${"  ".repeat(tabSpaceLevel)}${key}: \n`;
-                        json[key].forEach((x, index) => {
-                            if (typeof (x) == "object") {
-                                result = parseJsonToYmlStringFormat(x, result, tabSpaceLevel + 1);
-                            } else {
-                                var arrayType: string[] = json[key] as string[];
-                                result += `${"  ".repeat(tabSpaceLevel + 1)}- ${arrayType[index]} \n`
-                            }
-                        })
+                        if (json[key].length > 0) {
+                            result += `${"  ".repeat(tabSpaceLevel)}${key}: \n`;
+                            json[key].forEach((x, index) => {
+                                if (typeof (x) == "object") {
+                                    result = parseJsonToYmlStringFormat(x, result, tabSpaceLevel + 1);
+                                } else {
+                                    var arrayType: string[] = json[key] as string[];
+                                    result += `${"  ".repeat(tabSpaceLevel + 1)}- ${arrayType[index]} \n`
+                                }
+                            })
+                        }
                     } else {
-                        result += `${"  ".repeat(tabSpaceLevel)}${key}: ${json[key]} \n`;
+                        if(typeof(json[key]) == "string" && json[key].replaceAll(" ", "").length > 0) {
+                            result += `${"  ".repeat(tabSpaceLevel)}${key}: ${json[key]} \n`;
+                        } else if (typeof(json[key]) =="number") {
+                            result += `${"  ".repeat(tabSpaceLevel)}${key}: ${json[key]} \n`;
+                        }
                     }
                 }
             }
@@ -147,6 +153,7 @@ async function buildInfrastructureComponents() {
         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["position_x"]
         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["position_y"]
         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["type"]
+         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["alive"]
 
         var ymlDocumentResult = parseJsonToYmlStringFormat(templateDocumentJson, "", 1)
 
@@ -251,6 +258,7 @@ if (!fs.existsSync(`./src/infrastructure/database/mydatabase.db`)) {
         type varchar not null,
         position_x integer not null,
         position_y integer not null,
+        alive bool not null,
         restart varchar(100) not null default 'always',
         configuration_id integer not null,
         constraint configuration_id_c foreign key (configuration_id) references configuration(id) on delete cascade
