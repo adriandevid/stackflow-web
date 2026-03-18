@@ -41,7 +41,7 @@ export default async function UpdateStateInfrastructureComponent(prev: any, id: 
                  return { id, image, command, created, status, ports, name };
             })
 
-            var container = containers.filter(x => x.name.includes(rows[0].service_key))[0];
+            var container = containers.filter(x => x.name != undefined && x.name.includes(rows[0].service_key))[0];
             
             if(container) {
                 resolve({

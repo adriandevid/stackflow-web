@@ -52,40 +52,41 @@ app.prepare().then(() => {
         eventsOfNetwork.on("data", function (data: any) {
             try {
                 var event: DockerEvent = JSON.parse(data.toString('utf8'));
+
+                if (event.Actor.Attributes.name == undefined) {
+                    return;
+                }
                 const existLogs: { resource: string, log: string, time: number, short_log: string }[] = localdatabase.prepare(`select * from log where resource = '${event.Actor.Attributes.name}' and time = ${event.time}`).all() as any[];
+
+                const streams: { id: number, operation: string, resource: string, logs: { resource: string, log: string, time: number, short_log: string }[] }[] = localdatabase.prepare(`select * from stream where resource = '${event.Actor.Attributes.name}' order by id DESC`).all() as any[];
 
                 if (existLogs.length > 0 && existLogs[existLogs.length - 1].log == data.toString('utf8')) {
                     return;
                 }
 
+                const lastStream = streams[0];
 
-                var shortLog = `${event.Type} - ${event.Actor.Attributes.name} - ${event.Action}`;
+                if (lastStream) {
+                    var shortLog = `${event.Type} - ${event.Actor.Attributes.name} - ${event.Action}`;
 
+                    const logsOfStream: { resource: string, log: string, time: number, short_log: string }[] = localdatabase.prepare(`select * from log where resource = '${event.Actor.Attributes.name}' and stream_id = ${lastStream.id}`).all() as any[];
 
-                if(existLogs.length > 0 && existLogs[existLogs.length - 1].short_log.includes("kill") && !shortLog.includes("destroy")) {
-                    return;
-                }
+                    if (logsOfStream.filter(x => x.short_log == shortLog).length > 0) {
+                        return;
+                    }
 
-                if(existLogs.length > 0 && existLogs[existLogs.length - 1].short_log.includes("kill") && !shortLog.includes("stop")) {
-                    return;
-                }
-
-                if(existLogs.length > 0 && existLogs[existLogs.length - 1].short_log.includes("stop") && !shortLog.includes("die")) {
-                    return;
-                }
-
-                if(existLogs.length > 0 && existLogs[existLogs.length - 1].short_log.includes("die") && shortLog.includes("stop")) {
-                    return;
-                }
-
-                localdatabase.exec(`
-                    insert into log(resource, log, time, short_log)
-                    values ('${event.Actor.Attributes.name}', '${data.toString('utf8')}', ${event.time}, '${shortLog}')   
+                    localdatabase.exec(`
+                    insert into log(resource, log, time, short_log, stream_id)
+                    values ('${event.Actor.Attributes.name}', '${data.toString('utf8')}', ${event.time}, '${shortLog}', ${lastStream.id})
                 `);
 
-                const logs: { resource: string, log: string, time: number, short_log: string }[] = localdatabase.prepare(`select * from log where resource = '${event.Actor.Attributes.name}'`).all() as any[];
+                    streams.forEach(stream => {
+                        const logs: { resource: string, log: string, time: number, short_log: string }[] = localdatabase.prepare(`select * from log where resource = '${stream.resource}' and stream_id = ${stream.id}`).all() as any[];
+                        stream.logs = logs
+                    })
 
-                io.emit(`logs-container`, JSON.stringify(logs));
+                    io.emit(`logs-container`, JSON.stringify(streams));
+                }
             } catch (ex) {
                 console.log(ex);
             }

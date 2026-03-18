@@ -9,6 +9,8 @@ export default async function StopInfrastructureComponent(prev: any, id: number)
 
     const rows = localdatabase.prepare(`select * from infrastructure_component where id = ${id}`).all() as { service_key: string }[];
 
+    localdatabase.exec(`insert into stream(operation, resource) values ('stop', '${rows[0].service_key}')`);
+
     const buildComponent = new Promise<string>((resolve, reject) => {
         exec(`docker compose -f ./configuration/docker-compose.yml stop ${rows[0].service_key}`, (error, stdout, stderr) => {
             if (error) {
@@ -19,7 +21,14 @@ export default async function StopInfrastructureComponent(prev: any, id: number)
         })
     });
     
-    await buildComponent;
+    try {
+        await buildComponent;
+    } catch (ex) {
+        localdatabase.exec(`
+            DELETE FROM stream
+            WHERE resource = '${rows[0].service_key}' and operation = 'stop';
+        `)
+    }
 
     return {
         status: 200

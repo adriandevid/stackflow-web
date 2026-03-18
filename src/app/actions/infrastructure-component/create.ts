@@ -101,7 +101,7 @@ export default async function CreateInfrastructureComponent (prev: any, body: In
             ...lastInfrastructureComponentQueryResult,
             ports: lastInfrastructureComponentQueryResult.ports != undefined ? lastInfrastructureComponentQueryResult.ports.map(x => x.port_bind) : [],
             commands: lastInfrastructureComponentQueryResult.commands != undefined ? lastInfrastructureComponentQueryResult.commands.map(x => x.command) : [],
-            environments: lastInfrastructureComponentQueryResult.environments != undefined ?  lastInfrastructureComponentQueryResult.environments.map(x => ({
+            environment: lastInfrastructureComponentQueryResult.environments != undefined ?  lastInfrastructureComponentQueryResult.environments.map(x => ({
                 [x.environment_name]: x.environment_value
             })) : [],
             labels: lastInfrastructureComponentQueryResult.labels != undefined ? lastInfrastructureComponentQueryResult.labels.map(x => x.label) : [],
@@ -117,6 +117,7 @@ export default async function CreateInfrastructureComponent (prev: any, body: In
     delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["position_y"]
     delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["type"]
     delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["alive"]
+    delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["environments"]
 
     var ymlDocumentResult = parseJsonToYmlStringFormat(templateDocumentJson, "", 1)
 

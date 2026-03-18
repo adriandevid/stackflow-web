@@ -184,7 +184,7 @@ export default function Home({
 
     const handleNodeDrag = (id: any, x: any, y: any) => {
         const nodeSelected = nodes.filter(x => x.id == id)[0];
-
+        console.log(nodeSelected)
         updatePosition(nodeSelected.code, { position_x: x, position_y: y }, nodeSelected.type == "container" ? 1 : 2);
         setNodes(prev => prev.map(node => node.id === id ? { ...node, position: { x, y } } : node));
     };
@@ -829,16 +829,22 @@ export default function Home({
     const [scaleMap, setScaleMap] = useState<number>(1.0);
 
     // const [executingBuild, executeBuild] = useState<boolean>(false);
-    const [localLogOfBuild, setLocalLogOfBuild] = useState<Log[]>([]);
+    const [localLogOfBuild, setLocalLogOfBuild] = useState<{ operation: string, resource: string, logs: Log[] }[]>([]);
 
     const buildInfrastructureComponent = async () => {
+        isLoading(true);
         setIsDeploying(true);
         startTransition(function () {
             formActionBuildInfrastructureComponent(selectedNode.code);
         })
     }
 
+    const [stopOperationLoading, setStopOperationLoading] = useState<boolean>(false);
+    const [destroyOperationLoading, setDestroyOperationLoading] = useState<boolean>(false);
+
     const stopInfrastructureComponent = async () => {
+        isLoading(true);
+        setStopOperationLoading(true);
         setIsDeploying(true);
         startTransition(function () {
             formActionStopInfrastructureComponent(selectedNode.code);
@@ -846,6 +852,8 @@ export default function Home({
     }
 
     const destroyInfrastructureComponent = async () => {
+        isLoading(true);
+        setDestroyOperationLoading(true);
         setIsDeploying(true);
         startTransition(function () {
             formActionDestroyInfrastructureComponent(selectedNode.code);
@@ -854,12 +862,16 @@ export default function Home({
 
     useEffect(function () {
         if (stateStopInfrastructureComponent && stateStopInfrastructureComponent.status == 200) {
+            isLoading(false);
+            setStopOperationLoading(false);
             setIsDeploying(false);
         }
     }, [stateStopInfrastructureComponent])
 
     useEffect(function () {
         if (stateDestroyInfrastructureComponent && stateDestroyInfrastructureComponent.status == 200) {
+            isLoading(false);
+            setDestroyOperationLoading(false);
             setIsDeploying(false);
         }
     }, [stateDestroyInfrastructureComponent])
@@ -871,16 +883,22 @@ export default function Home({
     useEffect(function () {
         if (socket) {
             socket.on(`logs-container`, (msg) => {
-                var logs: Log[] = JSON.parse(msg);
-                setLocalLogOfBuild([...logs]);
+                var stream: { resource: string, operation: string, logs: Log[] }[] = JSON.parse(msg);
+                setLocalLogOfBuild(stream);
             })
         }
     }, [socket])
 
+    const [loading, isLoading] = useState<boolean>(false);
+
     const loadLogsOfService = async () => {
+        isLoading(true);
+
         const request = await fetch(`${window.location.href}/api/logs/${selectedNode.code}`, { method: "GET" });
-        const response: Log[] = await request.json();
+        const response: { resource: string, operation: string, logs: Log[] }[] = await request.json();
         setLocalLogOfBuild([...response]);
+
+        isLoading(false);
     }
 
     useEffect(function () {
@@ -893,15 +911,28 @@ export default function Home({
         if (localLogOfBuild.length > 0) {
             var isInfrastructureComponent = infrastructureComponentsSource.filter(x => x.service_key == localLogOfBuild[localLogOfBuild.length - 1].resource).length > 0;
             if (isInfrastructureComponent) {
-                if (
-                    localLogOfBuild[localLogOfBuild.length - 1].short_log.includes("start") || 
-                    localLogOfBuild[localLogOfBuild.length - 1].short_log.includes("die") ||
-                    localLogOfBuild[localLogOfBuild.length - 1].short_log.includes("destroy")
-                ) {
-                    var infrastructureComponent = infrastructureComponentsSource.filter(x => x.service_key == localLogOfBuild[localLogOfBuild.length - 1].resource)[0];
+                const lastStreamLog = localLogOfBuild[localLogOfBuild.length - 1];
+                var infrastructureComponent = infrastructureComponentsSource.filter(x => x.service_key == localLogOfBuild[localLogOfBuild.length - 1].resource)[0];
+                isLoading(true);
+
+                if (lastStreamLog.operation == "start" && lastStreamLog.logs.filter(x => x.short_log.includes("start"))) {
+
                     startTransition(function () {
                         formActionUpdateStateOfComponent(infrastructureComponent.id);
                     })
+                } else if (lastStreamLog.operation == "stop" && lastStreamLog.logs[lastStreamLog.logs.length - 1].short_log.includes("die")) {
+
+                    startTransition(function () {
+                        formActionUpdateStateOfComponent(infrastructureComponent.id);
+                    })
+                } else if (lastStreamLog.operation == "down" && lastStreamLog.logs[lastStreamLog.logs.length - 1].short_log.includes("destroy")) {
+
+
+                    startTransition(function () {
+                        formActionUpdateStateOfComponent(infrastructureComponent.id);
+                    })
+                } else {
+                    isLoading(false);
                 }
             }
         }
@@ -909,6 +940,7 @@ export default function Home({
 
     useEffect(function () {
         if (stateUpdateStateOfComponent && stateUpdateStateOfComponent.status == 200) {
+            isLoading(false);
             router.refresh();
         }
     }, [stateUpdateStateOfComponent])
@@ -925,7 +957,9 @@ export default function Home({
 
     useEffect(function () {
         if (stateBuildInfrastructureComponent && stateBuildInfrastructureComponent.status == 200) {
+            isLoading(false);
             setIsDeploying(false);
+            loadLogsOfService();
         }
     }, [stateBuildInfrastructureComponent])
 
@@ -934,6 +968,16 @@ export default function Home({
 
             className="flex h-screen w-full bg-slate-50 overflow-hidden font-sans text-slate-900 select-none animate-in animate-fade-in duration-700"
         >
+            {
+                loading && (
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in text-white">
+                        <div className='flex flex-col justify-center items-center'>
+                            <RefreshCw size={40} className="animate-spin" />
+                            <p className='text-md'>Carregando...</p>
+                        </div>
+                    </div>
+                )
+            }
             {/* Notificação Toast */}
             {notification && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[10000] bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -2052,7 +2096,7 @@ export default function Home({
                             ))}
                         </div>
 
-                        <div className="flex-1 flex flex-col overflow-hidden">
+                        <div className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto">
                             {selectedNode && activeTab === 'nodes-map' ? (
                                 /* Painel de Detalhes do Node Selecionado */
                                 <div className="flex-1 p-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -2106,63 +2150,72 @@ export default function Home({
                                                 <Terminal size={18} /> Abrir Terminal de Node
                                             </button> */}
                                             {
-                                                localLogOfBuild.length > 0 && localLogOfBuild[localLogOfBuild.length - 1].short_log.includes("start") ?
+                                                localLogOfBuild.length > 0 && (
+                                                    localLogOfBuild[0].logs.length > 0 &&
+                                                    localLogOfBuild[0].operation == "start" &&
+                                                    !localLogOfBuild[0].logs.map(x => x.short_log.split("-")[2].replaceAll(" ", "")).includes("die")
+                                                ) ?
                                                     <div className='flex flex-row gap-4'>
                                                         <button
                                                             onClick={() => {
                                                                 stopInfrastructureComponent();
                                                             }}
-                                                            disabled={isDeploying}
+                                                            disabled={stopOperationLoading || destroyOperationLoading}
                                                             className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-colors cursor-pointer"
                                                         >
-                                                            {isDeploying ? <RefreshCw size={16} className="animate-spin" /> : <CircleSlash size={16} className="text-cyan-400" />}
-                                                            {isDeploying ? 'Stoping...' : 'Stop Deployment'}
+                                                            {stopOperationLoading ? <RefreshCw size={16} className="animate-spin" /> : <CircleSlash size={16} className="text-cyan-400" />}
+                                                            {stopOperationLoading ? 'Stoping...' : 'Stop Deployment'}
                                                         </button>
                                                         <button
                                                             onClick={() => {
                                                                 destroyInfrastructureComponent();
                                                             }}
-                                                            disabled={isDeploying}
-                                                            className="w-full items-center gap-2 flex items-center justify-center  py-3 rounded-lg text-sm font-bold shadow-lg transition-all active:scale-95 cursor-pointer bg-red-600 hover:bg-red-700 text-white shadow-red-200"
+                                                            disabled={destroyOperationLoading || stopOperationLoading}
+                                                            className="w-full items-center gap-2 flex items-center justify-center  py-3 rounded-lg text-sm font-bold shadow-lg transition-all active:scale-95 cursor-pointer bg-red-600 disabled:bg-red-500 hover:bg-red-700 text-white shadow-red-200"
                                                         >
-                                                            {isDeploying ? <RefreshCw size={16} className="animate-spin" /> : <CircleSlash size={16} className="text-white" />}
-                                                            {isDeploying ? 'Destroying...' : 'Destroy Deployment'}
+                                                            {destroyOperationLoading ? <RefreshCw size={16} className="animate-spin" /> : <CircleSlash size={16} className="text-white" />}
+                                                            {destroyOperationLoading ? 'Destroying...' : 'Destroy Deployment'}
                                                         </button>
                                                     </div> :
                                                     <button
                                                         onClick={() => {
                                                             buildInfrastructureComponent();
                                                         }}
-                                                        disabled={isDeploying}
+                                                        disabled={isDeploying || destroyOperationLoading || stopOperationLoading}
                                                         className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-colors cursor-pointer"
                                                     >
                                                         {isDeploying ? <RefreshCw size={16} className="animate-spin" /> : <Code size={16} className="text-cyan-400" />}
                                                         {isDeploying ? 'Deploying...' : 'Deploy'}
                                                     </button>
                                             }
-                                            <button type='button' onClick={async () => {
-                                                if (selectedNode.id.includes("infra")) {
-                                                    const serviceResponse = await fetch(`${window.location.href}/api/infrastructure-component/${selectedNode.code}`, { method: "GET" });
-                                                    const responseJson: InfrastructureComponent = await serviceResponse.json();
-                                                    propsFormUpdateInfrastructureComponent.reset({
-                                                        ...responseJson
-                                                    });
+                                            <button
+                                                type='button'
+                                                onClick={async () => {
+                                                    if (selectedNode.id.includes("infra")) {
+                                                        const serviceResponse = await fetch(`${window.location.href}/api/infrastructure-component/${selectedNode.code}`, { method: "GET" });
+                                                        const responseJson: InfrastructureComponent = await serviceResponse.json();
+                                                        propsFormUpdateInfrastructureComponent.reset({
+                                                            ...responseJson
+                                                        });
 
-                                                    setShowEditInfrastructureModal(true);
-                                                } else {
-                                                    const serviceResponse = await fetch(`${window.location.href}/api/applications/${selectedNode.code}`, { method: "GET" });
-                                                    const responseJson: Application = await serviceResponse.json();
-                                                    propsFormUpdateApplication.reset({
-                                                        ...responseJson,
-                                                        port: `${responseJson.port}`,
-                                                        node_port: `${responseJson.node_port}`,
-                                                        target_port: `${responseJson.target_port}`,
-                                                        replicas: `${responseJson.replicas}`
-                                                    });
+                                                        setShowEditInfrastructureModal(true);
+                                                    } else {
+                                                        const serviceResponse = await fetch(`${window.location.href}/api/applications/${selectedNode.code}`, { method: "GET" });
+                                                        const responseJson: Application = await serviceResponse.json();
+                                                        propsFormUpdateApplication.reset({
+                                                            ...responseJson,
+                                                            port: `${responseJson.port}`,
+                                                            node_port: `${responseJson.node_port}`,
+                                                            target_port: `${responseJson.target_port}`,
+                                                            replicas: `${responseJson.replicas}`
+                                                        });
 
-                                                    setShowEditAppplicationModal(true);
-                                                }
-                                            }} className="w-full py-3 border mt-2 cursor-pointer border-slate-900 text-slate-900 rounded-xl font-bold flex items-center cursor-pointer justify-center gap-2 hover:text-white hover:bg-slate-900 transition-colors">
+                                                        setShowEditAppplicationModal(true);
+                                                    }
+                                                }}
+                                                className="w-full py-3 border mt-2 cursor-pointer border-slate-900 text-slate-900 rounded-xl font-bold flex items-center cursor-pointer justify-center gap-2 hover:text-white hover:bg-slate-900 transition-colors"
+                                                disabled={isDeploying || destroyOperationLoading || stopOperationLoading}
+                                            >
                                                 <Edit size={18} /> Editar Serviço
                                             </button>
                                         </div>
@@ -2204,9 +2257,18 @@ export default function Home({
                                         <p className="flex gap-2"><span>[14:22:01]</span> <span className="text-slate-500">Ambiente de Produção carregado.</span></p>
                                         {
                                             localLogOfBuild.length > 0 ?
-                                                localLogOfBuild.map((x, index) => (
-                                                    <div key={index}><p className="flex gap-2 text-cyan-500"><span>{`[${new Date(x.time * 1000).toLocaleDateString()}]`}</span>{x.short_log}</p></div>
-                                                )) :
+                                                localLogOfBuild.map((stream, indexStream) => {
+                                                    return (
+                                                        <div key={indexStream}>
+                                                            <p>operation: {stream.operation}</p>
+                                                            {
+                                                                stream.logs.map((log, indexLog) => (
+                                                                    <div key={indexLog}><p className="flex gap-2 text-cyan-500"><span>{`[${new Date(log.time * 1000).toLocaleDateString()}]`}</span>{log.short_log}</p></div>
+                                                                ))
+                                                            }
+                                                        </div>
+                                                    )
+                                                }) :
                                                 <></>
                                         }
                                         {/* {(localLogOfBuild.length > 0) && <p className="flex gap-2 text-cyan-500"><span>[14:25:42]</span> {localLogOfBuild.includes("\n") ? localLogOfBuild.split("\n").map(x => (<>{x} <br/></>)): localLogOfBuild}</p>} */}

@@ -3,12 +3,16 @@ import fs from 'fs';
 import { rm } from 'node:fs/promises'; // Use fs/promises for async/await
 
 if (!fs.existsSync(`./configuration`)) {
-    fs.mkdirSync(`./configuration`);
+    fs.mkdirSync(`./configuration`, {
+        recursive: true
+    });
     console.log(`Folder ./configuration created.`);
 }
 
 if (!fs.existsSync(`./configuration/applications/`)) {
-    fs.mkdirSync(`./configuration/applications/`);
+    fs.mkdirSync(`./configuration/applications/`, {
+        recursive: true
+    });
     console.log(`Folder ./configuration/applications/ created.`);
 }
 
@@ -43,9 +47,9 @@ function parseJsonToYmlStringFormat(json: any, r: string, tabSpaceLevel: number)
                             })
                         }
                     } else {
-                        if(typeof(json[key]) == "string" && json[key].replaceAll(" ", "").length > 0) {
+                        if (typeof (json[key]) == "string" && json[key].replaceAll(" ", "").length > 0) {
                             result += `${"  ".repeat(tabSpaceLevel)}${key}: ${json[key]} \n`;
-                        } else if (typeof(json[key]) =="number") {
+                        } else if (typeof (json[key]) == "number") {
                             result += `${"  ".repeat(tabSpaceLevel)}${key}: ${json[key]} \n`;
                         }
                     }
@@ -125,6 +129,9 @@ async function buildInfrastructureComponents() {
     const localdatabase = new Database('./src/infrastructure/database/mydatabase.db', { verbose: console.log });
     const infrastructureComponents: any[] = localdatabase.prepare(`select * from infrastructure_component`).all();
 
+    const decoder = new TextDecoder('utf-8');
+    var stringDefault = decoder.decode(data.buffer);
+
     infrastructureComponents.forEach(async (lastInfrastructureComponentQueryResult) => {
         lastInfrastructureComponentQueryResult.commands = localdatabase.prepare(`select * from infrastructure_component_command where infrastructure_component_id = ${lastInfrastructureComponentQueryResult.id}`).all();
         lastInfrastructureComponentQueryResult.ports = localdatabase.prepare(`select * from infrastructure_component_port where infrastructure_component_id = ${lastInfrastructureComponentQueryResult.id}`).all();
@@ -138,7 +145,7 @@ async function buildInfrastructureComponents() {
                 ...lastInfrastructureComponentQueryResult,
                 ports: lastInfrastructureComponentQueryResult.ports != undefined ? lastInfrastructureComponentQueryResult.ports.map((x: any) => x.port_bind) : [],
                 commands: lastInfrastructureComponentQueryResult.commands != undefined ? lastInfrastructureComponentQueryResult.commands.map((x: any) => x.command) : [],
-                environments: lastInfrastructureComponentQueryResult.environments != undefined ? lastInfrastructureComponentQueryResult.environments.map((x: any) => ({
+                environment: lastInfrastructureComponentQueryResult.environments != undefined ? lastInfrastructureComponentQueryResult.environments.map((x: any) => ({
                     [x.environment_name]: x.environment_value
                 })) : [],
                 labels: lastInfrastructureComponentQueryResult.labels != undefined ? lastInfrastructureComponentQueryResult.labels.map((x: any) => x.label) : [],
@@ -153,29 +160,24 @@ async function buildInfrastructureComponents() {
         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["position_x"]
         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["position_y"]
         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["type"]
-         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["alive"]
+        delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["alive"]
+        delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["environments"]
 
         var ymlDocumentResult = parseJsonToYmlStringFormat(templateDocumentJson, "", 1)
 
-        fs.readFile("./configuration/docker-compose.yml", async (err, content) => {
-            if (err) throw err;
-
-            const decoder = new TextDecoder('utf-8');
-            const str = decoder.decode(data.buffer);
-
-            var result = str;
-            result = result.replace("#[content]", `
+        stringDefault = stringDefault.replace("#[content]", `
 #start ${lastInfrastructureComponentQueryResult.service_key}
 ${ymlDocumentResult}
 #end ${lastInfrastructureComponentQueryResult.service_key}
 #[content]
         `)
-            await fs.writeFile("./configuration/docker-compose.yml", new Uint8Array(Buffer.from(result)), (err) => {
-                if (err) throw err;
-                console.log('The file has been saved!');
-            });
-        });
     })
+
+    fs.writeFile("./configuration/docker-compose.yml", new Uint8Array(Buffer.from(stringDefault)), (err: any) => {
+        if (err) {
+            console.log(err);
+        }
+    });
 }
 
 fs.writeFile(`./configuration/docker-compose.yml`, data, (err) => {

@@ -1,16 +1,17 @@
 
 services:
 
-#start rabbit
-  rabbit: 
-    image: rabbitmq:4.0-management 
-    container_name: rabbit 
+#start dbBusiness
+  dbBusiness: 
+    image: postgres 
+    container_name: dbBusiness 
     restart: always 
     ports: 
-      - 5672:5672 
-      - 15672:15672 
+      - 5438:5432 
+    volumes: 
+      - /myschool/data:/var/lib/postgresql 
 
-#end rabbit
+#end dbBusiness
 #[content]
         
 networks:
