@@ -12,7 +12,7 @@ export default async function BuildApplication(prev: any, id: number): Promise<{
     localdatabase.exec(`insert into stream(operation, resource) values ('start', '${rows[0].name}')`);
 
     const buildeDeployment = new Promise<boolean>((resolve, reject) => {
-        exec(`kubectl apply -f ./configuration/applications/${rows[0].name}/deployment.yml`, (error, stdout, stderr) => {
+        exec(`kubectl apply -f ./configuration/applications/${rows[0].name}/deployment.yml`, { windowsHide: true }, (error, stdout, stderr) => {
             if (error) {
                 reject(false);
                 return;
@@ -22,7 +22,7 @@ export default async function BuildApplication(prev: any, id: number): Promise<{
     });
 
     const buildeService = new Promise<boolean>((resolve, reject) => {
-        exec(`kubectl apply -f ./configuration/applications/${rows[0].name}/service.yml`, (error, stdout, stderr) => {
+        exec(`kubectl apply -f ./configuration/applications/${rows[0].name}/service.yml`, { windowsHide: true }, (error, stdout, stderr) => {
             if (error) {
                 reject(false);
                 return;

@@ -25,7 +25,7 @@ export default async function DeleteInfrastructureComponent(prev: any, body: { i
     `)
 
     const downContainer = new Promise<boolean>((resolve, reject) => {
-        exec(`docker compose -f ./configuration/docker-compose.yml down ${infrastructureComponentResult.service_key}`, (error, stdout, stderr) => {
+        exec(`docker compose -f ./configuration/docker-compose.yml down ${infrastructureComponentResult.service_key}`,{ windowsHide: true }, (error, stdout, stderr) => {
             if (error) {
                 reject(false);
                 return;

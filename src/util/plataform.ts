@@ -7,7 +7,7 @@ export type MemoryInformations = {
 
 export async function getLocalMemoryInformations(): Promise<MemoryInformations> {
     return new Promise((resolve, reject) => {
-        exec("wmic logicaldisk get caption, freespace, size", (error, stdout, stderr) => {
+        exec("wmic logicaldisk get caption, freespace, size", { windowsHide: true }, (error, stdout, stderr) => {
             if (error) {
                 reject(`exec error: ${error}`);
                 return;
@@ -38,7 +38,7 @@ export async function getLocalMemoryInformationsLinux(defaultValue?: string | un
                 size: parseInt(selectedDisck[1].replaceAll(" ", ""))
             })
         } else {
-            exec("df -h", (error, stdout, stderr) => {
+            exec("df -h",{ windowsHide: true }, (error, stdout, stderr) => {
                 if (error) {
                     reject(`exec error: ${error}`);
                     return;

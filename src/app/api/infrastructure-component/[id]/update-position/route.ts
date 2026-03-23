@@ -1,6 +1,5 @@
 import { localdatabase } from "@pedreiro-web/infrastructure/database/config";
-import { ApplicationUpdate, ApplicationFile, Application } from "@pedreiro-web/infrastructure/repository/types/application";
-import { deleteFolder } from "@pedreiro-web/util/file";
+import { ApplicationUpdate } from "@pedreiro-web/infrastructure/repository/types/application";
 import { NextRequest, NextResponse } from "next/server";
 
 

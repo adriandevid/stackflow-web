@@ -4,10 +4,7 @@ import { localdatabase } from "@pedreiro-web/infrastructure/database/config";
 import { Edge } from "@pedreiro-web/infrastructure/repository/types";
 import { Application } from "@pedreiro-web/infrastructure/repository/types/application";
 import { InfrastructureComponent, InfrastructureComponentCommand, InfrastructureComponentEnvironment, InfrastructureComponentLabel, InfrastructureComponentNetwork, InfrastructureComponentPort, InfrastructureComponentVolume } from "@pedreiro-web/infrastructure/repository/types/infrastructure-component";
-import { totalmem, freemem, cpus, } from 'os';
-import { memoryUsage, platform } from "process";
-import checkDiskSpace from 'check-disk-space';
-import { exec } from 'child_process';
+import { platform } from "process";
 import { getLocalMemoryInformations, getLocalMemoryInformationsLinux, MemoryInformations } from "@pedreiro-web/util/plataform";
 
 export default async function App() {

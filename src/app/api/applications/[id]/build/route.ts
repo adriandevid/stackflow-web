@@ -8,7 +8,7 @@ async function GET(request: NextRequest, { params }: { params: Promise<{ id: num
     const rows = localdatabase.prepare(`select * from application where id = ${id}`).all() as { name: string }[];
     
     const executeCommand = new Promise<string>((resolve, reject) => {
-        exec(`kubectl apply -f ./configuration/applications/${rows[0].name}/deployment.yml`, (error, stdout, stderr) => {
+        exec(`kubectl apply -f ./configuration/applications/${rows[0].name}/deployment.yml`,{ windowsHide: true }, (error, stdout, stderr) => {
             if (error) {
                 reject(`exec error: ${error}`);
                 return;

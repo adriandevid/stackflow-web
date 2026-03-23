@@ -12,7 +12,7 @@ export default async function StopInfrastructureComponent(prev: any, id: number)
     localdatabase.exec(`insert into stream(operation, resource) values ('stop', '${rows[0].service_key}')`);
 
     const buildComponent = new Promise<string>((resolve, reject) => {
-        exec(`docker compose -f ./configuration/docker-compose.yml stop ${rows[0].service_key}`, (error, stdout, stderr) => {
+        exec(`docker compose -f ./configuration/docker-compose.yml stop ${rows[0].service_key}`,{ windowsHide: true }, (error, stdout, stderr) => {
             if (error) {
                 reject(`exec error: ${error}`);
                 return;

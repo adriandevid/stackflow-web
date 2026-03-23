@@ -13,7 +13,7 @@ export default async function UpdateStateInfrastructureComponent(prev: any, id: 
     const rows = localdatabase.prepare(`select * from infrastructure_component where id = ${id}`).all() as { service_key: string }[];
 
     const getStatusComponent = new Promise<{ name: string, status: string, log: string }>((resolve, reject) => {
-        exec(`docker ps`, (error, stdout, stderr) => {
+        exec(`docker ps`,{ windowsHide: true }, (error, stdout, stderr) => {
             if (error) {
                 reject(`exec error: ${error}`);
                 return;

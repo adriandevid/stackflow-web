@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 async function GET(request: NextRequest, { params }: { params: Promise<{ id: number }> }) {
     const executeCommand = new Promise<string>((resolve, reject) => {
-        exec(`wsl docker ps`, (error, stdout, stderr) => {
+        exec(`wsl docker ps`,{ windowsHide: true }, (error, stdout, stderr) => {
             if (error) {
                 reject(`exec error: ${error}`);
                 return;
