@@ -224,7 +224,6 @@ export default function Home({
     const [loading, isLoading] = useState<boolean>(false);
 
     const loadLogsOfService = async () => {
-        isLoading(true);
         if (selectedNode.id.includes("infra")) {
             const request = await fetch(`${window.location.href}/api/logs/infrastructure-component/${selectedNode.code}`, { method: "GET" });
             const response: { resource: string, operation: string, logs: Log[] }[] = await request.json();
@@ -234,8 +233,6 @@ export default function Home({
             const response: { resource: string, operation: string, logs: Log[] }[] = await request.json();
             setLocalLogOfBuild([...response]);
         }
-
-        isLoading(false);
     }
 
     useEffect(function () {
@@ -246,15 +243,15 @@ export default function Home({
 
     useEffect(function () {
         if (stateUpdateStateOfComponent && stateUpdateStateOfComponent.status == 200) {
-            isLoading(false);
             router.refresh();
+            isLoading(false);
         }
     }, [stateUpdateStateOfComponent])
 
     useEffect(function () {
         if (stateUpdateStateOfApplication && stateUpdateStateOfApplication.status == 200) {
-            isLoading(false);
             router.refresh();
+            isLoading(false);
         }
     }, [stateUpdateStateOfApplication])
 

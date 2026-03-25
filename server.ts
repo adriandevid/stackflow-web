@@ -185,7 +185,7 @@ app.prepare().then(() => {
             if (apiObj.metadata.name) {
                 const application: any[] = localdatabase.prepare(`select * from application where name = '${apiObj.metadata.name.split("-")[0]}'`).all() as any[];
                 var shortLog = `${phase} - ${apiObj.metadata.name.split("-")[0]} - ${apiObj.status.phase}`;
-                
+
                 if (application.length > 0) {
                     const streams: { id: number, operation: string, resource: string, logs: { resource: string, log: string, time: number, short_log: string }[] }[] = localdatabase.prepare(`select * from stream where resource = '${apiObj.metadata.name.split("-")[0]}' order by id DESC`).all() as any[];
                     const lastStream = streams[0];

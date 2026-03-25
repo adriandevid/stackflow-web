@@ -8,4 +8,6 @@ execute o commando para criar as imagens no minikube.
 
 start kubectl proxy --port=8080
 
+kubectl port-forward service/<namespace> 8080:8080
+
 iniciar o kubernetes service api.

@@ -11,6 +11,8 @@ import BuildInfrastructureComponent from "@pedreiro-web/app/actions/infrastructu
 import DestroyInfrastructureComponent from "@pedreiro-web/app/actions/infrastructure-component/destroy";
 import StopInfrastructureComponent from "@pedreiro-web/app/actions/infrastructure-component/stop";
 import { Edge } from "@pedreiro-web/infrastructure/repository/types";
+import StopApplication from "@pedreiro-web/app/actions/application/stop";
+import DestroyApplication from "@pedreiro-web/app/actions/application/destroy";
 
 export default function ContentArea({
     nodes,
@@ -166,6 +168,9 @@ export default function ContentArea({
 
     const [stateBuildInfrastructureComponent, formActionBuildInfrastructureComponent, pendingBuildInfrastructureComponent] = useActionState(BuildInfrastructureComponent, undefined);
     const [stateBuildApplication, formActionBuildApplication, pendingBuildApplication] = useActionState(BuildApplication, undefined);
+    const [stateStopApplication, formActionStopApplication, pendingStopApplication] = useActionState(StopApplication, undefined);
+    const [stateDestroyApplication, formActionDestroyApplication, pendingDestroyApplication] = useActionState(DestroyApplication, undefined);
+
     const [stateStopInfrastructureComponent, formActionStopInfrastructureComponent, pendingStopInfrastructureComponent] = useActionState(StopInfrastructureComponent, undefined);
     const [stateDestroyInfrastructureComponent, formActionDestroyInfrastructureComponent, pendingDestroyInfrastructureComponent] = useActionState(DestroyInfrastructureComponent, undefined);
 
@@ -179,11 +184,26 @@ export default function ContentArea({
 
     useEffect(function () {
         if (stateBuildApplication && stateBuildApplication.status == 200) {
-            isLoading(false);
             setIsDeploying(false);
             loadLogsOfService();
         }
     }, [stateBuildApplication])
+
+    useEffect(function () {
+        if (stateStopApplication && stateStopApplication.status == 200) {
+            setIsDeploying(false);
+            setStopOperationLoading(false);
+            loadLogsOfService();
+        }
+    }, [stateStopApplication])
+
+    useEffect(function () {
+        if (stateDestroyApplication && stateDestroyApplication.status == 200) {
+            setIsDeploying(false);
+            setDestroyOperationLoading(false);
+            loadLogsOfService();
+        }
+    }, [stateDestroyApplication])
 
 
     const buildInfrastructureComponent = async () => {
@@ -204,6 +224,25 @@ export default function ContentArea({
 
     const [stopOperationLoading, setStopOperationLoading] = useState<boolean>(false);
     const [destroyOperationLoading, setDestroyOperationLoading] = useState<boolean>(false);
+
+    const stopApplication = async () => {
+        isLoading(true);
+        setStopOperationLoading(true);
+        setIsDeploying(true);
+        startTransition(function () {
+            formActionStopApplication(selectedNode!.code);
+        })
+    }
+
+    const destroyApplication = async () => {
+        isLoading(true);
+        setDestroyOperationLoading(true);
+        setIsDeploying(true);
+        startTransition(function () {
+            formActionDestroyApplication(selectedNode!.code);
+        })
+    }
+
 
     const stopInfrastructureComponent = async () => {
         isLoading(true);
@@ -494,7 +533,11 @@ export default function ContentArea({
                                             <div className='flex flex-row gap-4'>
                                                 <button
                                                     onClick={() => {
-                                                        stopInfrastructureComponent();
+                                                        if (selectedNode.id.includes("infra")) {
+                                                            stopInfrastructureComponent();
+                                                        } else {
+                                                            stopApplication();
+                                                        }
                                                     }}
                                                     disabled={stopOperationLoading || destroyOperationLoading}
                                                     className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-colors cursor-pointer"
@@ -504,7 +547,11 @@ export default function ContentArea({
                                                 </button>
                                                 <button
                                                     onClick={() => {
-                                                        destroyInfrastructureComponent();
+                                                        if (selectedNode.id.includes("infra")) {
+                                                            destroyInfrastructureComponent();
+                                                        } else {
+                                                            destroyApplication();
+                                                        }
                                                     }}
                                                     disabled={destroyOperationLoading || stopOperationLoading}
                                                     className="w-full items-center gap-2 flex items-center justify-center  py-3 rounded-lg text-sm font-bold shadow-lg transition-all active:scale-95 cursor-pointer bg-red-600 disabled:bg-red-500 hover:bg-red-700 text-white shadow-red-200"
@@ -550,7 +597,7 @@ export default function ContentArea({
                                         className="w-full h-full p-8 font-mono text-sm bg-slate-900 text-cyan-50/90 outline-none resize-none selection:bg-cyan-500/30 leading-relaxed scrollbar-hide"
                                         spellCheck="false"
                                         defaultValue={dockerComposeDocument}
-                                        //onChange={(e) => setCode(e.target.value)}
+                                    //onChange={(e) => setCode(e.target.value)}
                                     />
                                 )
                             }
