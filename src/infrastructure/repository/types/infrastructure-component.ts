@@ -11,7 +11,7 @@ export type InfrastructureComponent = {
   container_name: string
   entrypoint?: string | null | undefined
   command?: string | null | undefined
-  restart: string          // default 'always'
+  restart?: string | undefined          // default 'always'
   configuration_id: number
   position_x: number
   position_y: number

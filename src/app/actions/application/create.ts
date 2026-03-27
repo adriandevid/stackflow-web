@@ -61,6 +61,8 @@ spec:
         - name: ${applicationCreatedResult.container_name}
           image: ${applicationCreatedResult.image}
           imagePullPolicy: ${applicationCreatedResult.image_pull_policy}
+    imagePullSecrets:
+        - name: ${applicationCreatedResult.image_pull_secrets}
     `);
 
     if (formData.files != undefined && formData.files.length > 0) {

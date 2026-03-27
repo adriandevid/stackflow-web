@@ -34,13 +34,16 @@ printInformations() {
 }
 
 start() {
-        sudo apt install curl -y
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
-        nvm install --lts
-        npm install pm2 -g
-        mkdir /opt/pw/
-        git clone git@github.com:adriandevid/pedreiro-web.git /opt/pw/
+        sudo npm install pm2@latest -g
+        sudo env "PATH=$PATH" pm2 start
 }
+
+install() {
+        sudo rm -rf /opt/pw
+        sudo mkdir /opt/pw
+        sudo git clone https://github.com/adriandevid/pedreiro-web.git /opt/pw
+}
+
 
 COMMANDS=("start" "stop" "validate")
 COMMAND_FOUND=false

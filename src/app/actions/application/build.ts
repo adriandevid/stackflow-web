@@ -31,10 +31,17 @@ export default async function BuildApplication(prev: any, id: number): Promise<{
         })
     });
 
-    await buildDeployment;
-    await buildService;
+    try {
+        await buildDeployment;
+        await buildService;
 
-    return {
-        status: 200
+        return {
+            status: 200
+        }
+
+    } catch {
+        return {
+            status: 400
+        }
     }
 }

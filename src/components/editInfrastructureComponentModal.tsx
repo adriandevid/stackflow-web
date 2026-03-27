@@ -12,15 +12,17 @@ import { useForm } from "react-hook-form";
 export default function EditInfrastructureComponentModal({
     showEditInfrastructureModal,
     setShowEditInfrastructureModal,
+    infrastructureComponent,
     showNotify
 }: {
     showEditInfrastructureModal: boolean
     setShowEditInfrastructureModal: any
+    infrastructureComponent: any
     showNotify: any
 }) {
     const [stateUpdateInfrastructureComponent, formActionUpdateInfrastructureComponent, pendingUpdateInfrastructureComponent] = useActionState(UpdateInfrastructureComponent, { status: 200 });
     const router = useRouter();
-    
+
     useEffect(function () {
         if (stateUpdateInfrastructureComponent.status == 200 && stateUpdateInfrastructureComponent.data) {
             setShowEditInfrastructureModal(false);
@@ -64,10 +66,26 @@ export default function EditInfrastructureComponentModal({
     const propsFormUpdateInfrastructureComponent = useForm<InfrastructureComponentUpdate>({
         resolver: zodResolver(InfrastructureComponentValidator),
         defaultValues: {
-            files: []
+            restart: "Always",
+            commands: [],
+            labels: [],
+            networks: [],
+            ports: [],
+            volumes: [],
+            environments: [],
+            files: [],
+            position_x: 200 + Math.random() * 200,
+            position_y: 200 + Math.random() * 100
         }
     });
 
+    useEffect(function () {
+        propsFormUpdateInfrastructureComponent.reset({ ...infrastructureComponent });
+    }, [infrastructureComponent])
+
+    propsFormUpdateInfrastructureComponent.watch(values => {
+        console.log(values);
+    })
 
     const fileInputUpdateRef = useRef<any>(null);
 
@@ -96,7 +114,7 @@ export default function EditInfrastructureComponentModal({
         e.target.value = '';
     };
 
-    if (!showEditInfrastructureModal) {
+    if (!showEditInfrastructureModal || infrastructureComponent.id  == undefined) {
         return <></>
     }
 
@@ -118,8 +136,9 @@ export default function EditInfrastructureComponentModal({
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-500/20 outline-none text-sm font-medium bg-white"
                             >
                                 <option value="db">Banco de Dados (SQL/NoSQL)</option>
-                                <option value="redis">Cache (Redis/In-memory)</option>
-                                <option value="mq">Mensageria (RabbitMQ/Kafka)</option>
+                                    <option value="redis">Cache (Redis/In-memory)</option>
+                                    <option value="mq">Mensageria (RabbitMQ/Kafka)</option>
+                                    <option value="sftr">Software Resource</option>
                             </select>
                         </div>
                         <div className="space-y-1">

@@ -15,6 +15,7 @@ export type Application = {
   container_name: string
   image: string
   image_pull_policy?: string | null | undefined
+  image_pull_secrets?: string | undefined
   replicas: string         // default 1
   configuration_id: number
   position_x: number
@@ -54,6 +55,7 @@ export const ApplicationValidator = z.object({
   container_name: z.string({ message: "Preencha o campo."}),
   image: z.string({ message: "Preencha o campo."}).min(1, { message: "Preencha o campo."}),
   image_pull_policy: z.string().optional().nullable(),
+  image_pull_secret: z.string().optional(),
   replicas: z.string().regex(new RegExp("\\d", "g"), { message: "Preencha o campo."}),         // default 1
   configuration_id: z.number().optional(),
   files: z.array(ApplicationFileValidator),

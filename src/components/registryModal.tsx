@@ -355,6 +355,7 @@ export default function RegistryModal({
                                     {propsFormCreateInfrastructureComponent.formState.errors.restart && (<p className='text-[12px] text-red-500 font-bold'>{propsFormCreateInfrastructureComponent.formState.errors.restart?.message}</p>)}
                                 </div>
                             </div>
+
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Commando único: </label>
                                 <input required {...propsFormCreateInfrastructureComponent.register("command")} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-500/20 outline-none text-sm font-medium" placeholder="Ex: example" />
@@ -677,7 +678,11 @@ export default function RegistryModal({
                                     <input required {...propsFormCreateApplication.register("image")} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-500/20 outline-none text-sm font-medium font-mono" placeholder="Ex: node:18-alpine" />
                                     {propsFormCreateApplication.formState.errors.image && (<p className='text-[12px] text-red-500 font-bold'>{propsFormCreateApplication.formState.errors.image?.message}</p>)}
                                 </div>
-
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Segredo de imagem: </label>
+                                    <input required {...propsFormCreateApplication.register("image_pull_secret")} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-500/20 outline-none text-sm font-medium font-mono" placeholder="Ex: example" />
+                                    {propsFormCreateApplication.formState.errors.image_pull_secret && (<p className='text-[12px] text-red-500 font-bold'>{propsFormCreateApplication.formState.errors.image_pull_secret?.message}</p>)}
+                                </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nome do container: </label>
                                     <input required {...propsFormCreateApplication.register("container_name")} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-500/20 outline-none text-sm font-medium font-mono" placeholder="Ex: teste" />

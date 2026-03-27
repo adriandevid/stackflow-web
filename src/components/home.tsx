@@ -113,7 +113,8 @@ export default function Home({
         'service.yml': `apiVersion: v1\nkind: Service\nmetadata:\n  name: api-service\nspec:\n  selector:\n    app: backend-api\n  ports:\n    - protocol: TCP\n      port: 80\n      targetPort: 5000`
     });
 
-    
+    const [infrastructureComponent, setInfrastructureComponent] = useState<InfrastructureComponent | undefined>();
+
     const [stateApplicationDelete, formActionApplicationDelete, pendingDeleteApplication] = useActionState(DeleteApplication, { status: 200 });
     const [stateDeleteInfrastructureComponent, formActionDeleteInfrastructureComponent, pendingDeleteInfrastructureComponent] = useActionState(DeleteInfrastructureComponent, { status: 200 });
 
@@ -300,6 +301,7 @@ export default function Home({
                 showEditInfrastructureModal={showEditInfrastructureModal}
                 setShowEditInfrastructureModal={setShowEditInfrastructureModal}
                 showNotify={showNotify}
+                infrastructureComponent={infrastructureComponent}
             />
 
             <EditApplicationModal 
@@ -358,10 +360,7 @@ export default function Home({
                         if (resourceId.includes("infra")) {
                             const serviceResponse = await fetch(`${window.location.href}/api/infrastructure-component/${selectedNode.code}`, { method: "GET" });
                             const responseJson: InfrastructureComponent = await serviceResponse.json();
-                            propsFormUpdateInfrastructureComponent.reset({
-                                ...responseJson
-                            });
-
+                            setInfrastructureComponent(responseJson);
                             setShowEditInfrastructureModal(true);
                         } else {
                             const serviceResponse = await fetch(`${window.location.href}/api/applications/${selectedNode.code}`, { method: "GET" });

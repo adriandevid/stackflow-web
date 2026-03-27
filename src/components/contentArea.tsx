@@ -175,15 +175,19 @@ export default function ContentArea({
     const [stateDestroyInfrastructureComponent, formActionDestroyInfrastructureComponent, pendingDestroyInfrastructureComponent] = useActionState(DestroyInfrastructureComponent, undefined);
 
     useEffect(function () {
-        if (stateBuildInfrastructureComponent && stateBuildInfrastructureComponent.status == 200) {
+        if (stateBuildInfrastructureComponent && (stateBuildInfrastructureComponent.status == 200 || stateBuildInfrastructureComponent.status == 400)) {
             isLoading(false);
             setIsDeploying(false);
             loadLogsOfService();
+
+            if(stateBuildInfrastructureComponent.status == 400) {
+                showNotify("Erro ao construir aplicação.");
+            }
         }
     }, [stateBuildInfrastructureComponent])
 
     useEffect(function () {
-        if (stateBuildApplication && stateBuildApplication.status == 200) {
+        if (stateBuildApplication && (stateBuildApplication.status == 200 || stateBuildApplication.status == 400)) {
             setIsDeploying(false);
             loadLogsOfService();
         }

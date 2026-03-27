@@ -15,6 +15,7 @@ export default async function BuildInfrastructureComponent(prev: any, id: number
     const buildComponent = new Promise<boolean>((resolve, reject) => {
         exec(`docker compose -f ./configuration/docker-compose.yml up ${rows[0].service_key} -d`, (error, stdout, stderr) => {
             if (error) {
+                console.log(error)
                 reject(false);
                 return;
             }
@@ -22,9 +23,14 @@ export default async function BuildInfrastructureComponent(prev: any, id: number
         })
     });
 
-    await buildComponent;
-
-    return {
-        status: 200
+    try {
+        await buildComponent;
+        return {
+            status: 200
+        }
+    } catch {
+        return {
+            status: 400
+        }
     }
 }

@@ -246,6 +246,11 @@ export default async function UpdateInfrastructureComponent(prev: any, body: Inf
         infrastructureComponentResult.environments = []
     }
 
+    infrastructureComponentResult.command = body.command;
+    infrastructureComponentResult.container_name = body.container_name;
+    infrastructureComponentResult.image = body.image;
+    infrastructureComponentResult.entrypoint = body.entrypoint;
+    infrastructureComponentResult.restart = body.restart;
 
     var templateDocumentJson: any = {
         [infrastructureComponentResult.service_key]: {
