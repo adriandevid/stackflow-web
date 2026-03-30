@@ -6,12 +6,13 @@ services:
   registry: 
     image: registry:3 
     container_name: registry 
-    entrypoint:  ./registry-init.sh 
+    entrypoint: /registry-init.sh /etc/distribution/config.yml 
     restart: always 
     ports: 
       - 5000:5000 
     volumes: 
       - ./auth/:/auth 
+      - ./registry-init.sh:/registry-init.sh:ro 
 
 #end registry
 #[content]
