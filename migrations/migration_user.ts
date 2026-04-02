@@ -20,5 +20,5 @@ localdatabase.exec(`
     );
 
     insert into user(name, password)
-    values ('admin', '${sha256("admin")}')
+    values ('${process.env.STACKFLOW_USER_NAME}', '${sha256(`${process.env.STACKFLOW_PASSWORD}`)}')
 `);

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node --no-warnings init.ts && node --no-warnings server.ts",
-    "build": "next build",
+    "build": "node --no-warnings init.ts && next build",
     "start": "node --no-warnings init.ts && node --no-warnings server.ts",
     "lint": "eslint"
   },

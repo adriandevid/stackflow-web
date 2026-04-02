@@ -3,6 +3,12 @@ module.exports = {
     name   : "pedreiro web",
     script : "npm",
     args   : "start",
-    watch: false
+    watch: false,
+    env: {
+      NODE_ENV: "development",
+    },
+    env_production: {
+      NODE_ENV: "production",
+    }
   }]
 };
