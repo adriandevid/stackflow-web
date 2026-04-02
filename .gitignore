@@ -13,6 +13,7 @@
 # testing
 /coverage
 /configuration
+config.yaml
 /src/infrastructure/database/*.db
 
 # next.js
