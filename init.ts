@@ -162,6 +162,7 @@ async function buildInfrastructureComponents() {
         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["type"]
         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["alive"]
         delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["environments"]
+        delete templateDocumentJson[lastInfrastructureComponentQueryResult.service_key]["build_date"]
 
         var ymlDocumentResult = parseJsonToYmlStringFormat(templateDocumentJson, "", 1)
 
@@ -238,6 +239,7 @@ if (!fs.existsSync(`./src/infrastructure/database/mydatabase.db`)) {
         replicas integer not null default 1,
         configuration_id integer not null,
         alive bool not null,
+        build_date datetime null,
         position_x integer not null,
         position_y integer not null,
         constraint configuration_id_c foreign key (configuration_id) references configuration(id) on delete cascade
@@ -264,6 +266,7 @@ if (!fs.existsSync(`./src/infrastructure/database/mydatabase.db`)) {
         alive bool not null,
         restart varchar(100) not null default 'always',
         configuration_id integer not null,
+        build_date datetime null,
         constraint configuration_id_c foreign key (configuration_id) references configuration(id) on delete cascade
     );
 

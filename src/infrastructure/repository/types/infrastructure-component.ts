@@ -22,7 +22,8 @@ export type InfrastructureComponent = {
   labels: InfrastructureComponentLabel[]
   environments: InfrastructureComponentEnvironment[]
   logs: Log[]
-  alive: boolean,
+  alive: boolean
+  build_date?: Date | undefined
   files: InfrastructureComponentFile[]
 }
 

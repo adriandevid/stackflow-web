@@ -18,6 +18,7 @@ export type Application = {
   image_pull_secrets?: string | undefined
   replicas: string         // default 1
   configuration_id: number
+  build_date?: Date | undefined
   position_x: number
   position_y: number
   files: ApplicationFile[]

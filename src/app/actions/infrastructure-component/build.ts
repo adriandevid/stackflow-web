@@ -24,6 +24,12 @@ export default async function BuildInfrastructureComponent(prev: any, id: number
     });
 
     try {
+        localdatabase.exec(`
+            UPDATE infrastructure_component
+            SET build_date = datetime('now')
+            WHERE id = ${id};
+        `)
+
         await buildComponent;
         return {
             status: 200

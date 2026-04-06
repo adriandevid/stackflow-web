@@ -311,7 +311,7 @@ export default function ContentArea({
                     image: result.image,
                     port: result.ports.length > 0 ? result.ports.map(x => x.port_bind).join(",") : "-",
                     subType: result.type,
-                    uptime: '0h',
+                    uptime: result.build_date ? result.build_date : '0h',
                     cpu: '0%'
                 },
                 position: { x: result.position_x, y: result.position_y }
@@ -329,7 +329,7 @@ export default function ContentArea({
                     port: result.port,
                     // subType: formData.type === 'web' ? 'api' : formData.subType,
                     subType: "container",
-                    uptime: '0h',
+                    uptime: result.build_date ? new Date(new Date().getTimezoneOffset() - result.build_date.getTimezoneOffset()).toDateString() : '0h',
                     cpu: '0%'
                 },
                 position: { x: result.position_x, y: result.position_y }

@@ -34,6 +34,12 @@ export default async function BuildApplication(prev: any, id: number): Promise<{
     try {
         await buildDeployment;
         await buildService;
+        
+        localdatabase.exec(`
+            UPDATE application
+            SET build_date = datetime('now')
+            WHERE id = ${id};
+        `)
 
         return {
             status: 200
