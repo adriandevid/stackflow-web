@@ -13,6 +13,7 @@ import StopInfrastructureComponent from "@pedreiro-web/app/actions/infrastructur
 import { Edge } from "@pedreiro-web/infrastructure/repository/types";
 import StopApplication from "@pedreiro-web/app/actions/application/stop";
 import DestroyApplication from "@pedreiro-web/app/actions/application/destroy";
+import DockerImagesHub from "./dockerImagesHub";
 
 export default function ContentArea({
     nodes,
@@ -480,7 +481,7 @@ export default function ContentArea({
                 </div>
 
                 <div className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto">
-                    {selectedNode && activeTab === 'nodes-map' ? (
+                    {(selectedNode && activeTab === 'nodes-map') && (
                         /* Painel de Detalhes do Node Selecionado */
                         <div className="flex-1 p-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="flex items-center justify-between mb-8">
@@ -578,8 +579,8 @@ export default function ContentArea({
                                 </div>
                             </div>
                         </div>
-                    ) : (
-                        /* Editor de Código */
+                    )}
+                    {(activeTab === 'files') && (
                         <div className="flex-1 relative overflow-hidden group bg-slate-900">
                             {
                                 dockerComposeDocument && (
@@ -592,6 +593,9 @@ export default function ContentArea({
                                 )
                             }
                         </div>
+                    )}
+                    {(activeTab === 'docker-images-hub') && (
+                        <DockerImagesHub></DockerImagesHub>
                     )}
                 </div>
 

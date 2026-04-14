@@ -1,7 +1,7 @@
 'use client';
 
 import Signout from "@pedreiro-web/app/actions/authentication/signout";
-import { Activity, CardSim, FileCode, Layers, LogOut, Plus, ShieldCheck } from "lucide-react";
+import { Activity, CardSim, FileCode, Layers, LogOut, Plus, ServerCrash, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 import { startTransition, useActionState, useEffect } from "react";
 
@@ -43,12 +43,13 @@ export default function Sidebar({
                     { id: 'nodes-map', label: 'Mapa de Nodes', icon: Activity },
                     { id: 'files', label: 'Arquivos de Config', icon: FileCode },
                     { id: 'security', label: 'Políticas de Rede', icon: ShieldCheck },
+                    { id: 'docker-images-hub', label: 'Repositórios de imagens', icon: ServerCrash }
                 ].map(item => (
                     <button
                         key={item.id}
                         onClick={() => {
                             setActiveTab(item.id);
-                            if (item.id == 'files') {
+                            if (item.id == 'files' || item.id == 'docker-images-hub') {
                                 setShowContentDetails(true);
                             }
 
