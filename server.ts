@@ -183,6 +183,8 @@ app.prepare().then(() => {
         const queryParams = { allowWatchBookmarks: true };
         const callback = (phase: any, apiObj: KubernetesPod) => {
             if (apiObj.metadata.name) {
+                console.log(apiObj.metadata.name);
+
                 const application: any[] = localdatabase.prepare(`select * from application where name = '${apiObj.metadata.name.split("-")[0]}'`).all() as any[];
                 var shortLog = `${phase} - ${apiObj.metadata.name.split("-")[0]} - ${apiObj.status.phase}`;
 
@@ -213,7 +215,6 @@ app.prepare().then(() => {
         };
 
         const dockerode = new Docker();
-
         const eventsOfNetwork = await dockerode.getEvents();
 
         eventsOfNetwork.on("data", function (data: any) {

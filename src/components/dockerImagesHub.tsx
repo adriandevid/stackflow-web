@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import CreateImageRegistry from "@pedreiro-web/app/actions/image-registry/create";
 import DeleteImageRegistry from "@pedreiro-web/app/actions/image-registry/delete";
+import LoginIntoImageRegistry from "@pedreiro-web/app/actions/image-registry/login";
 import { ImageHub } from "@pedreiro-web/infrastructure/repository/types";
 import { Plus, Settings, Trash, X, User, PlusCircle, Save } from "lucide-react";
 import { startTransition, useActionState, useEffect, useState } from "react";
@@ -10,8 +11,8 @@ import { useForm } from "react-hook-form";
 import z from "zod";
 
 export const formLoginImageRegistryScheme = z.object({
-    user_name: z.string(),
-    password: z.string()
+    user_name: z.string({ message: "informe um nome de usuário" }).min(1, "informe um nome de usuário"),
+    password: z.string({ message: "informe uma senha" }).min(1, "informe uma senha")
 })
 
 export const formRegistryImageHub = z.object({
@@ -24,9 +25,10 @@ export type FormRegistryImageHub = z.infer<typeof formRegistryImageHub>;
 export default function DockerImagesHub({ showNotify, isLoading }: { showNotify: any, isLoading: any }) {
     const [imageHubs, setImageHubs] = useState<ImageHub[]>([]);
 
-    
+
     const [stateRegistryImageHub, formActionRegistryImageHub, pendingRegistryImageHub] = useActionState(CreateImageRegistry, { status: 300 });
     const [stateDeleteRegistryImageHub, formActionDeleteRegistryImageHub, pendingDeleteRegistryImageHub] = useActionState(DeleteImageRegistry, { status: 300 });
+    const [stateLoginImageRegistry, formActionLoginImageRegistry, pendingLoginImageRegistry] = useActionState(LoginIntoImageRegistry, undefined);
 
     const [showModalLoginRegistry, setShowModalLoginRegistry] = useState<boolean>(false);
     const [registry, setRegistry] = useState<ImageHub | undefined>();
@@ -53,6 +55,19 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
         }
     }
 
+
+    const login = async () => {
+        if (await propsFormLoginImageRegistry.trigger(["password", "user_name"]) && registry) {
+            isLoading(true);
+            startTransition(() => {
+                formActionLoginImageRegistry({
+                    id: registry?.id,
+                    ...propsFormLoginImageRegistry.watch()
+                });
+            })
+        }
+    }
+
     const deleteRegistry = async (id: number) => {
         isLoading(true);
 
@@ -62,12 +77,27 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
     }
 
     useEffect(function () {
+        if (stateLoginImageRegistry && stateLoginImageRegistry.status == 200) {
+            propsFormLoginImageRegistry.reset({ password: "", user_name: "" });
+            isLoading(false);
+            setShowModalLoginRegistry(false);
+            setRegistry(undefined);
+
+            loadtable();
+            showNotify(`Image registry logado com sucesso!`);
+        } else if (stateLoginImageRegistry && stateRegistryImageHub.status == 400) {
+            isLoading(false);
+            showNotify(stateRegistryImageHub.message);
+        }
+    }, [stateLoginImageRegistry])
+
+    useEffect(function () {
         if (stateRegistryImageHub.status == 200) {
             reset({ url: "" });
             isLoading(false);
             loadtable();
             showNotify(`Image registry cadastrado com sucesso!`);
-        } else if(stateRegistryImageHub.status == 400) {
+        } else if (stateRegistryImageHub.status == 400) {
             isLoading(false);
             showNotify(stateRegistryImageHub.message);
         }
@@ -136,7 +166,7 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
                         <div className="flex flex-row items-center bg-gray-50 p-4 rounded-lg gap-4 w-[max-content]" key={index}>
                             <span className="text-sm">{x.url}</span>
                             {x.active ? <span className="bg-green-200 text-green-400 px-2 rounded-sm text-sm">ativo</span> : <span className="bg-red-200 text-red-400 px-2 rounded-sm text-sm">inativo</span>}
-                            <button title="login into image registry" onClick={() => { setShowModalLoginRegistry(true) }} className="p-2 bg-green-400 rounded-lg shadow-md hover:bg-green-500 cursor-pointer"><User color="white" size={15}></User></button>
+                            <button title="login into image registry" onClick={() => { setShowModalLoginRegistry(true); setRegistry(x); }} className="p-2 bg-green-400 rounded-lg shadow-md hover:bg-green-500 cursor-pointer"><User color="white" size={15}></User></button>
                             <button title="remove image registry" onClick={() => setRegistry(x)} className="p-2 bg-red-400 rounded-lg shadow-md hover:bg-red-500 cursor-pointer"><X color="white" size={15}></X></button>
                         </div>
                     ))
@@ -149,9 +179,13 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
                         <h3 className="text-lg font-bold flex items-center gap-2">
                             <PlusCircle className="text-cyan-500" size={20} /> Novo Registro
                         </h3>
-                        <button onClick={() => setShowModalLoginRegistry(!showModalLoginRegistry)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                        <button onClick={() => 
+                            {
+                                setShowModalLoginRegistry(false);
+                                setRegistry(undefined);
+                            }} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
                     </div>
-                    <form className="p-6 space-y-4">
+                    <div className="p-6 space-y-4">
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">User Name: </label>
                             <input required {...propsFormLoginImageRegistry.register("user_name")} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-500/20 outline-none text-sm font-medium" placeholder="Ex: example" />
@@ -162,16 +196,14 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
                             <input required {...propsFormLoginImageRegistry.register("password")} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-500/20 outline-none text-sm font-medium" placeholder="Ex: example" />
                             {propsFormLoginImageRegistry.formState.errors.password && (<p className='text-[12px] text-red-500 font-bold'>{propsFormLoginImageRegistry.formState.errors.password?.message}</p>)}
                         </div>
-                        <button type="button" onClick={async () => {
-
-                        }} className="w-full py-3 mt-4 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-cyan-100 flex items-center justify-center gap-2">
+                        <button type="button" onClick={login} className="w-full py-3 mt-4 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-cyan-100 flex items-center justify-center gap-2">
                             <Save size={18} /> Fazer login
                         </button>
-                    </form>
+                    </div>
                 </div>
             </div>
 
-            <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" hidden={registry == undefined}>
+            <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" hidden={registry == undefined || showModalLoginRegistry}>
                 <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-300">
                     <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                         <h3 className="text-lg font-bold flex items-center gap-2">

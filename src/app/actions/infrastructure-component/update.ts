@@ -257,7 +257,7 @@ export default async function UpdateInfrastructureComponent(prev: any, body: Inf
             ...infrastructureComponentResult,
             ports: infrastructureComponentResult.ports.map(x => x.port_bind),
             commands: infrastructureComponentResult.commands.map(x => x.command),
-            environments: infrastructureComponentResult.environments.map(x => ({
+            environment: infrastructureComponentResult.environments.map(x => ({
                 [x.environment_name]: x.environment_value
             })),
             labels: infrastructureComponentResult.labels.map(x => x.label),
@@ -277,7 +277,7 @@ export default async function UpdateInfrastructureComponent(prev: any, body: Inf
     delete templateDocumentJson[infrastructureComponentResult.service_key]["build_date"];
 
     var ymlDocumentResult = parseJsonToYmlStringFormat(templateDocumentJson, "", 1)
-
+    
     readFile("./configuration/docker-compose.yml", (content: string) => {
         var result = content;
         result = result.replace(/services:[\s\S]*?#start/g, "services:\n#start")

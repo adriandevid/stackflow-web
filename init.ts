@@ -208,10 +208,7 @@ if (!fs.existsSync(`./src/infrastructure/database/mydatabase.db`)) {
     drop table if exists infrastructure_component_labels;
     drop table if exists infrastructure_component_environment;
     drop table if exists edges;
-<<<<<<< HEAD
-=======
     drop table if exists image_registry;
->>>>>>> 1c73a50 (ajuste)
 
     create table configuration(
         id integer primary key autoincrement,
@@ -326,10 +323,7 @@ if (!fs.existsSync(`./src/infrastructure/database/mydatabase.db`)) {
     create table image_registry(
         id integer primary key autoincrement,
         url varchar not null,
-<<<<<<< HEAD
-=======
         active bool not null default '0',
->>>>>>> 1c73a50 (ajuste)
         configuration_id integer not null,
         constraint configuration_id_c foreign key (configuration_id) references configuration(id) on delete cascade
     );
