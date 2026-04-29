@@ -4,8 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import CreateImageRegistry from "@pedreiro-web/app/actions/image-registry/create";
 import DeleteImageRegistry from "@pedreiro-web/app/actions/image-registry/delete";
 import LoginIntoImageRegistry from "@pedreiro-web/app/actions/image-registry/login";
+import LogoutImageRegistry from "@pedreiro-web/app/actions/image-registry/logout";
 import { ImageHub } from "@pedreiro-web/infrastructure/repository/types";
-import { Plus, Settings, Trash, X, User, PlusCircle, Save } from "lucide-react";
+import { Plus, Settings, Trash, X, User, PlusCircle, Save, LogOut, ArrowBigRight, ChevronRight } from "lucide-react";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -29,6 +30,7 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
     const [stateRegistryImageHub, formActionRegistryImageHub, pendingRegistryImageHub] = useActionState(CreateImageRegistry, { status: 300 });
     const [stateDeleteRegistryImageHub, formActionDeleteRegistryImageHub, pendingDeleteRegistryImageHub] = useActionState(DeleteImageRegistry, { status: 300 });
     const [stateLoginImageRegistry, formActionLoginImageRegistry, pendingLoginImageRegistry] = useActionState(LoginIntoImageRegistry, undefined);
+    const [stateLogoutImageRegistry, formActionLogoutImageRegistry, pendingLogoutImageRegistry] = useActionState(LogoutImageRegistry, undefined);
 
     const [showModalLoginRegistry, setShowModalLoginRegistry] = useState<boolean>(false);
     const [registry, setRegistry] = useState<ImageHub | undefined>();
@@ -68,6 +70,13 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
         }
     }
 
+    const logout = async (id: number) => {
+        isLoading(true);
+        startTransition(() => {
+            formActionLogoutImageRegistry(id);
+        })
+    }
+
     const deleteRegistry = async (id: number) => {
         isLoading(true);
 
@@ -75,6 +84,20 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
             formActionDeleteRegistryImageHub(id)
         })
     }
+
+    useEffect(function () {
+        if (stateLogoutImageRegistry && stateLogoutImageRegistry.status == 200) {
+            isLoading(false);
+            setShowModalLoginRegistry(false);
+            setRegistry(undefined);
+
+            loadtable();
+            showNotify(`Image registry deslogado com sucesso!`);
+        } else if (stateLogoutImageRegistry && stateLogoutImageRegistry.status == 400) {
+            isLoading(false);
+            showNotify(stateLogoutImageRegistry.message);
+        }
+    }, [stateLogoutImageRegistry])
 
     useEffect(function () {
         if (stateLoginImageRegistry && stateLoginImageRegistry.status == 200) {
@@ -109,6 +132,10 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
             isLoading(false);
             loadtable();
             showNotify(`Image registry removido com sucesso!`);
+        } else if (stateDeleteRegistryImageHub.status == 400) {
+            setRegistry(undefined);
+            isLoading(false);
+            showNotify(`Image registry não removido, ocorreu um erro durante a execução!`);
         }
     }, [stateDeleteRegistryImageHub])
 
@@ -122,6 +149,16 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
             isLoading(false);
 
             //t
+        })
+    }
+
+    const loadImagesFromImageRegistry = async (username: string, password: string, url: string) => {
+        await fetch(`${url}/v2/_catalog`, {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Basic ${btoa(`${username}:${password}`)}`
+            }
         })
     }
 
@@ -163,11 +200,15 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
             <div className="flex flex-col gap-4 mt-4">
                 {
                     imageHubs.map((x, index) => (
-                        <div className="flex flex-row items-center bg-gray-50 p-4 rounded-lg gap-4 w-[max-content]" key={index}>
-                            <span className="text-sm">{x.url}</span>
-                            {x.active ? <span className="bg-green-200 text-green-400 px-2 rounded-sm text-sm">ativo</span> : <span className="bg-red-200 text-red-400 px-2 rounded-sm text-sm">inativo</span>}
-                            <button title="login into image registry" onClick={() => { setShowModalLoginRegistry(true); setRegistry(x); }} className="p-2 bg-green-400 rounded-lg shadow-md hover:bg-green-500 cursor-pointer"><User color="white" size={15}></User></button>
-                            <button title="remove image registry" onClick={() => setRegistry(x)} className="p-2 bg-red-400 rounded-lg shadow-md hover:bg-red-500 cursor-pointer"><X color="white" size={15}></X></button>
+                        <div className="flex items-center flex-row gap-4">
+                            <div className="flex flex-row items-center bg-gray-50 p-4 rounded-lg gap-4 w-[max-content]" key={index}>
+                                <span className="text-sm">{x.url}</span>
+                                {x.active ? <span className="bg-green-200 text-green-400 px-2 rounded-sm text-sm">ativo</span> : <span className="bg-red-200 text-red-400 px-2 rounded-sm text-sm">inativo</span>}
+                                {!x.active ? <button title="login into image registry" onClick={() => { setShowModalLoginRegistry(true); setRegistry(x); }} className="p-2 bg-green-400 rounded-lg shadow-md hover:bg-green-500 cursor-pointer"><User color="white" size={15}></User></button> : <></>}
+                                {x.active ? (<button title="logout into image registry" onClick={() => logout(x.id)} className="p-2 boreder border-1 border-red-400 bg-white rounded-lg shadow-md hover:bg-red-500 hover:text-white cursor-pointer group"><LogOut className="text-red-400 group-hover:text-white" size={15}></LogOut></button>) : <></>}
+                                <button title="remove image registry" onClick={() => setRegistry(x)} className="p-2 bg-red-400 rounded-lg shadow-md hover:bg-red-500 cursor-pointer"><X color="white" size={15}></X></button>
+                            </div>
+                            {x.active ? <button type="button" title="list images of registry" onClick={() => loadImagesFromImageRegistry("myuser", "denis12#!", x.url)} className="p-2 bg-blue-400 rounded-full shadow-md hover:bg-blue-500 cursor-pointer"><ChevronRight color="white" size={15}></ChevronRight></button> : <></>}
                         </div>
                     ))
                 }
@@ -179,11 +220,10 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
                         <h3 className="text-lg font-bold flex items-center gap-2">
                             <PlusCircle className="text-cyan-500" size={20} /> Novo Registro
                         </h3>
-                        <button onClick={() => 
-                            {
-                                setShowModalLoginRegistry(false);
-                                setRegistry(undefined);
-                            }} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                        <button onClick={() => {
+                            setShowModalLoginRegistry(false);
+                            setRegistry(undefined);
+                        }} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
                     </div>
                     <div className="p-6 space-y-4">
                         <div className="space-y-1">

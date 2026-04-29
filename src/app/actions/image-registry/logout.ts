@@ -5,7 +5,7 @@ import { ImageHub } from "@pedreiro-web/infrastructure/repository/types";
 import { normalizeQuery } from "@pedreiro-web/util/normalizeQuery";
 import { exec } from "child_process";
 
-export default async function DeleteImageRegistry(prev: any, id: number): Promise<any> {
+export default async function LogoutImageRegistry(prev: any, id: number): Promise<any> {
     try {
         const imageHub = localdatabase.prepare(`select * from image_registry where id = '${id}'`).all() as ImageHub[]
 
@@ -23,16 +23,20 @@ export default async function DeleteImageRegistry(prev: any, id: number): Promis
                 }
             })
         });
+
         if (await logoutRegistryOperation) {
             localdatabase.exec(normalizeQuery(`
-                DELETE FROM image_registry
-                WHERE id = ${id};
+                update image_registry
+                set active = '0'
+                where id = ${id}
             `))
-            return { status: 200 }
+
+            return {
+                status: 200
+            }
         }
-        return { status: 400 }
+        return { status: 400, message: "Não foi possível concluir a operação!" }
     } catch (ex) {
-        console.log(ex)
-        return { status: 400 }
+        return { status: 400, message: "Não foi possível concluir a operação!" }
     }
 }
