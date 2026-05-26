@@ -147,7 +147,7 @@ const k8s = require('@kubernetes/client-node');
 
 
 //const app = next({ dev: process.env.NODE_ENV !== "production" });
-const app = next({ dev: false });
+const app = next({ dev: process.env.NODE_ENV !== "production" });
 const handler = app.getRequestHandler();
 
 const localdatabase = new Database('./src/infrastructure/database/mydatabase.db');
@@ -284,8 +284,6 @@ async function createWatcherDocker(socket: any, io: any) {
         }
     })
 }
-
-console.log("1")
 
 app.prepare().then(() => {
     const httpServer = createServer(handler);

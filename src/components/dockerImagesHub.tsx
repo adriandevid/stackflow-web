@@ -6,7 +6,7 @@ import DeleteImageRegistry from "@pedreiro-web/app/actions/image-registry/delete
 import LoginIntoImageRegistry from "@pedreiro-web/app/actions/image-registry/login";
 import LogoutImageRegistry from "@pedreiro-web/app/actions/image-registry/logout";
 import { ImageHub } from "@pedreiro-web/infrastructure/repository/types";
-import { Plus, Settings, Trash, X, User, PlusCircle, Save, LogOut, ArrowBigRight, ChevronRight } from "lucide-react";
+import { Plus, Settings, Trash, X, User, PlusCircle, Save, LogOut, ArrowBigRight, ChevronRight, Container, ChevronDown } from "lucide-react";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -147,20 +147,30 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
         }).then(async (response) => {
             setImageHubs(await response.json());
             isLoading(false);
-
-            //t
         })
     }
 
-    const loadImagesFromImageRegistry = async (username: string, password: string, url: string) => {
-        await fetch(`${url}/v2/_catalog`, {
+    const [registrySelected, setRegistrySelected] = useState<number | undefined>();
+    const [imagesOfRegistry, setImagesOfRegistry] = useState<{ repositories: string[] } | undefined>();
+
+    const loadImagesFromImageRegistry = async (registry_id: number) => {
+        isLoading(true);
+
+        setRegistrySelected(registry_id);
+
+        const responseRequest = await fetch(`${document.location.href}/api/image-hub/images/${registry_id}`, {
             method: "GET",
             credentials: 'include',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Basic ${btoa(`${username}:${password}`)}`
+                'Content-Type': 'application/json'
             }
         })
+        const resultJson = await responseRequest.json();
+        setImagesOfRegistry(resultJson);
+
+        isLoading(false);
+
+        return resultJson;
     }
 
     useEffect(function () {
@@ -201,15 +211,47 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
             <div className="flex flex-col gap-4 mt-4">
                 {
                     imageHubs.map((x, index) => (
-                        <div className="flex items-center flex-row gap-4" key={index}>
-                            <div className="flex flex-row items-center bg-gray-50 p-4 rounded-lg gap-4 w-[max-content]" key={index}>
-                                <span className="text-sm">{x.url}</span>
-                                {x.active ? <span className="bg-green-200 text-green-400 px-2 rounded-sm text-sm">ativo</span> : <span className="bg-red-200 text-red-400 px-2 rounded-sm text-sm">inativo</span>}
-                                {!x.active ? <button title="login into image registry" onClick={() => { setShowModalLoginRegistry(true); setRegistry(x); }} className="p-2 bg-green-400 rounded-lg shadow-md hover:bg-green-500 cursor-pointer"><User color="white" size={15}></User></button> : <></>}
-                                {x.active ? (<button title="logout into image registry" onClick={() => logout(x.id)} className="p-2 boreder border-1 border-red-400 bg-white rounded-lg shadow-md hover:bg-red-500 hover:text-white cursor-pointer group"><LogOut className="text-red-400 group-hover:text-white" size={15}></LogOut></button>) : <></>}
-                                <button title="remove image registry" onClick={() => setRegistry(x)} className="p-2 bg-red-400 rounded-lg shadow-md hover:bg-red-500 cursor-pointer"><X color="white" size={15}></X></button>
+                        <div className="flex flex-col gap-2" key={index}>
+                            <div className="flex items-center flex-row gap-4">
+                                <div className="flex flex-row items-center bg-gray-50 p-4 rounded-lg gap-4 w-[max-content]" key={index}>
+                                    <span className="text-sm">{x.url}</span>
+                                    {x.active ? <span className="bg-green-200 text-green-400 px-2 rounded-sm text-sm">ativo</span> : <span className="bg-red-200 text-red-400 px-2 rounded-sm text-sm">inativo</span>}
+                                    {!x.active ? <button title="login into image registry" onClick={() => { setShowModalLoginRegistry(true); setRegistry(x); }} className="p-2 bg-green-400 rounded-lg shadow-md hover:bg-green-500 cursor-pointer"><User color="white" size={15}></User></button> : <></>}
+                                    {x.active ? (<button title="logout into image registry" onClick={() => logout(x.id)} className="p-2 boreder border-1 border-red-400 bg-white rounded-lg shadow-md hover:bg-red-500 hover:text-white cursor-pointer group"><LogOut className="text-red-400 group-hover:text-white" size={15}></LogOut></button>) : <></>}
+                                    <button title="remove image registry" onClick={() => setRegistry(x)} className="p-2 bg-red-400 rounded-lg shadow-md hover:bg-red-500 cursor-pointer"><X color="white" size={15}></X></button>
+                                </div>
+                                {
+                                    x.active ? 
+                                    <button 
+                                        type="button" 
+                                        title="list images of registry" 
+                                        onClick={() => {
+                                            if(registrySelected != x.id ) {
+                                                loadImagesFromImageRegistry(x.id);
+                                            } else {
+                                                setRegistrySelected(undefined);
+                                            }
+                                        }} 
+                                        className="p-2 bg-blue-400 rounded-full shadow-md hover:bg-blue-500 cursor-pointer">
+                                            {
+                                                registrySelected == x.id ?
+                                                <ChevronDown color="white" size={15}></ChevronDown> : <ChevronRight color="white" size={15}></ChevronRight>
+                                            }
+                                    </button> : 
+                                    <></>
+                                }
                             </div>
-                            {x.active ? <button type="button" title="list images of registry" onClick={() => loadImagesFromImageRegistry("myuser", "denis12#!", x.url)} className="p-2 bg-blue-400 rounded-full shadow-md hover:bg-blue-500 cursor-pointer"><ChevronRight color="white" size={15}></ChevronRight></button> : <></>}
+                            {
+                                registrySelected == x.id && (
+                                    <div className="border-l-4 px-4 ml-6 mt-2">
+                                        {
+                                            imagesOfRegistry && (
+                                                imagesOfRegistry.repositories.map(x => (<p key={x} className="flex flex-row gap-4 items-center text-sm"><Container size={20}></Container>{x}</p>))
+                                            )
+                                        }
+                                    </div>
+                                )
+                            }
                         </div>
                     ))
                 }
