@@ -6,7 +6,7 @@ import DeleteImageRegistry from "@pedreiro-web/app/actions/image-registry/delete
 import LoginIntoImageRegistry from "@pedreiro-web/app/actions/image-registry/login";
 import LogoutImageRegistry from "@pedreiro-web/app/actions/image-registry/logout";
 import { ImageHub } from "@pedreiro-web/infrastructure/repository/types";
-import { Plus, Settings, Trash, X, User, PlusCircle, Save, LogOut, ArrowBigRight, ChevronRight, Container, ChevronDown } from "lucide-react";
+import { Plus, Settings, Trash, X, User, PlusCircle, Save, LogOut, ArrowBigRight, ChevronRight, Container, ChevronDown, Cuboid } from "lucide-react";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -214,6 +214,7 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
                         <div className="flex flex-col gap-2" key={index}>
                             <div className="flex items-center flex-row gap-4">
                                 <div className="flex flex-row items-center bg-gray-50 p-4 rounded-lg gap-4 w-[max-content]" key={index}>
+                                    <Container></Container>
                                     <span className="text-sm">{x.url}</span>
                                     {x.active ? <span className="bg-green-200 text-green-400 px-2 rounded-sm text-sm">ativo</span> : <span className="bg-red-200 text-red-400 px-2 rounded-sm text-sm">inativo</span>}
                                     {!x.active ? <button title="login into image registry" onClick={() => { setShowModalLoginRegistry(true); setRegistry(x); }} className="p-2 bg-green-400 rounded-lg shadow-md hover:bg-green-500 cursor-pointer"><User color="white" size={15}></User></button> : <></>}
@@ -243,10 +244,10 @@ export default function DockerImagesHub({ showNotify, isLoading }: { showNotify:
                             </div>
                             {
                                 registrySelected == x.id && (
-                                    <div className="border-l-4 px-4 ml-6 mt-2">
+                                    <div className="border-l-4 px-4 ml-6 mt-2 flex flex-col gap-4">
                                         {
                                             imagesOfRegistry && (
-                                                imagesOfRegistry.repositories.map(x => (<p key={x} className="flex flex-row gap-4 items-center text-sm"><Container size={20}></Container>{x}</p>))
+                                                imagesOfRegistry.repositories.map(x => (<p key={x} className="flex flex-row gap-4 items-center text-sm hover:pl-2 hover:text-sky-600 cursor-pointer hover:font-[600]"><Cuboid size={20}></Cuboid>{x}</p>))
                                             )
                                         }
                                     </div>

@@ -2,6 +2,7 @@
 
 import { localdatabase } from "@pedreiro-web/infrastructure/database/config";
 import { InfrastructureComponent } from "@pedreiro-web/infrastructure/repository/types/infrastructure-component";
+import { dockerControlPlane } from "@pedreiro-web/lib/docker";
 import { createFile, readFile } from "@pedreiro-web/util/file";
 import { exec } from "child_process";
 
@@ -24,18 +25,7 @@ export default async function DeleteInfrastructureComponent(prev: any, body: { i
         WHERE resource = '${row[0].service_key}';
     `)
 
-    const downContainer = new Promise<boolean>((resolve, reject) => {
-        exec(`docker compose -f ./configuration/docker-compose.yml down ${infrastructureComponentResult.service_key}`,{ windowsHide: true }, (error, stdout, stderr) => {
-            if (error) {
-                reject(false);
-                return;
-            }
-            resolve(true);
-        })
-    });
-
-    var operationBuildResult = await downContainer;
-    if (operationBuildResult) {
+    if (await dockerControlPlane.downService(infrastructureComponentResult.service_key)) {
         readFile("./configuration/docker-compose.yml", (content: string) => {
             var result = content;
 
@@ -54,5 +44,5 @@ export default async function DeleteInfrastructureComponent(prev: any, body: { i
         return { data: infrastructureComponentResult, status: 200 }
     }
 
-    return { message: operationBuildResult, status: 400 }
+    return { message: "not executed operation", status: 400 }
 }
