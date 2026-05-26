@@ -4,12 +4,11 @@ import { localdatabase } from "@pedreiro-web/infrastructure/database/config";
 import { exec } from "child_process";
 import DockerCompose from "dockerode-compose";
 import Docker from "dockerode";
-import DockerControlPlane from "@pedreiro-web/lib/docker";
+import { dockerControlPlane } from "@pedreiro-web/lib/docker";
 
 export default async function BuildInfrastructureComponent(prev: any, id: number): Promise<{
     status: number
 } | undefined> {
-    const dockerControlPlane = new DockerControlPlane("./configuration/docker-compose.yml");
 
     const rows = localdatabase.prepare(`select * from infrastructure_component where id = ${id}`).all() as { service_key: string }[];
 
