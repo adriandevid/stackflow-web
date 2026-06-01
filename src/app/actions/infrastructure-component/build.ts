@@ -9,7 +9,6 @@ import { dockerControlPlane } from "@pedreiro-web/lib/docker";
 export default async function BuildInfrastructureComponent(prev: any, id: number): Promise<{
     status: number
 } | undefined> {
-
     const rows = localdatabase.prepare(`select * from infrastructure_component where id = ${id}`).all() as { service_key: string }[];
 
     localdatabase.exec(`insert into stream(operation, resource) values ('start', '${rows[0].service_key}')`);
