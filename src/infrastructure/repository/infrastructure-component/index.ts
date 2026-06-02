@@ -106,4 +106,70 @@ export default class InfrastructureComponentRepository {
             values ('${port_bind}', ${infrastructureId})
         `))
     }
+
+    updateNetwork(id: number, network: string) {
+        localdatabase.exec(normalizeQuery(`
+            UPDATE infrastructure_component_network
+            SET network = '${network}'
+            where id = ${id}
+        `))
+    }
+
+    deleteNetwork(id: number) {
+        localdatabase.exec(`
+            DELETE FROM infrastructure_component_network
+            WHERE id = ${id};
+        `)
+    }
+
+    insertNetwork(infrastructureId: number, networkName: string) {
+        localdatabase.exec(normalizeQuery(`
+            insert into infrastructure_component_network(network, infrastructure_component_id)
+            values ('${networkName}', ${infrastructureId})
+        `))
+    }
+
+    updateLabel(id: number, label: string) {
+        localdatabase.exec(normalizeQuery(`
+            UPDATE infrastructure_component_labels
+            SET label = '${label}'
+            where id = ${id}
+        `))
+    }
+
+    deleteLabel(id: number) {
+        localdatabase.exec(`
+            DELETE FROM infrastructure_component_labels
+            WHERE id = ${id};
+        `)
+    }
+
+    insertLabel(infrastructureId: number, label: string) {
+        localdatabase.exec(normalizeQuery(`
+            insert into infrastructure_component_labels(label, infrastructure_component_id)
+            values ('${label}', ${infrastructureId})
+        `))
+    }
+
+    updateEnvironmentVariable(id: number, environmentName: string, environmentValue: string) {
+        localdatabase.exec(normalizeQuery(`
+            UPDATE infrastructure_component_environment
+            SET environment_name = '${environmentName}', environment_value = '${environmentValue}'
+            where id = ${id}
+        `))
+    }
+
+    deleteEnvironmentVariable(id: number) {
+        localdatabase.exec(`
+            DELETE FROM infrastructure_component_environment
+            WHERE id = ${id};
+        `)
+    }
+
+    insertEnvironmentVariable(name: string, value: string, infrastructureId: number) {
+        localdatabase.exec(normalizeQuery(`
+            insert into infrastructure_component_environment(environment_name, environment_value, infrastructure_component_id)
+            values ('${name}', '${value}', ${infrastructureId})
+        `))
+    }
 }
