@@ -25,7 +25,7 @@ export default async function App() {
     infrastructureComponent.labels = localdatabase.prepare(`select * from infrastructure_component_labels where infrastructure_component_id = ${infrastructureComponent.id}`).all() as InfrastructureComponentLabel[];
     infrastructureComponent.environments = localdatabase.prepare(`select * from infrastructure_component_environment where infrastructure_component_id = ${infrastructureComponent.id}`).all() as InfrastructureComponentEnvironment[];
   })
-
+  
   var memory: MemoryInformations = { size: 0 };
   
   // if(platform== "win32") {

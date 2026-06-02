@@ -2,7 +2,7 @@
 
 import BuildAllComponents from "@pedreiro-web/app/actions/build_all";
 import { Activity, ChevronRight, Download, FileJson, Globe, ImageIcon, Play, RefreshCw } from "lucide-react";
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { Node } from "./mapInterator";
 import { domToPng } from 'modern-screenshot';
 
@@ -34,6 +34,10 @@ export default function HeaderContent({
             formActionBuildAllComponents();
         })
     };
+
+    useEffect(function () {
+        setIsDeploying(pendingBuildAllComponents)
+    }, [pendingBuildAllComponents])
 
 
     const exportMapImage = () => {
@@ -131,12 +135,12 @@ export default function HeaderContent({
                                 </button> */}
                 <button
                     onClick={handleDeploy}
-                    disabled={isDeploying}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition-all active:scale-95 cursor-pointer ${isDeploying ? 'bg-slate-400 text-white' : 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-cyan-200'
+                    disabled={pendingBuildAllComponents}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition-all active:scale-95 cursor-pointer ${pendingBuildAllComponents ? 'bg-slate-400 text-white' : 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-cyan-200'
                         }`}
                 >
-                    {isDeploying ? <RefreshCw size={16} className="animate-spin" /> : <Play size={16} />}
-                    {isDeploying ? 'Deploying...' : 'Deploy'}
+                    {pendingBuildAllComponents ? <RefreshCw size={16} className="animate-spin" /> : <Play size={16} />}
+                    {pendingBuildAllComponents ? 'Deploying...' : 'Deploy'}
                 </button>
             </div>
         </header>

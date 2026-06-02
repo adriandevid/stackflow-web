@@ -12,14 +12,14 @@ export class DockerControlPlane {
     constructor(dockerComposePath: string) {
         //super();
         this.dockerComposePath = dockerComposePath;
-        this.dockerBaseCommand.replace("%compose_path", dockerComposePath);
+        this.dockerBaseCommand = this.dockerBaseCommand.replace("%compose_path", dockerComposePath);
     }
 
     getCommand(operation: string, service_key: string) {
-        this.dockerBaseCommand.replace("%operation", operation);
-        this.dockerBaseCommand.replace("%service_key", service_key);
+        var command = this.dockerBaseCommand.replace("%operation", operation);
+        command = command.replace("%service_key", service_key);
 
-        return this.dockerBaseCommand;
+        return command;
     }
 
     executeOperation(command: string): Promise<boolean> {
@@ -36,6 +36,7 @@ export class DockerControlPlane {
 
     upService(service_key: string): Promise<boolean> {
         const command = this.getCommand("up", service_key);
+        console.log(`==> command : ${command}`)
         return this.executeOperation(command);
     }
 

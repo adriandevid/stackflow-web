@@ -152,15 +152,21 @@ const handler = app.getRequestHandler();
 
 const localdatabase = new Database('./src/infrastructure/database/mydatabase.db');
 
-exec(`docker compose -f ./configuration/docker-compose.yml down`, (error: any, stdout: any, stderr: any) => {
+exec(`docker compose -f ./configuration/docker-compose.yml up -d`, (error: any, stdout: any, stderr: any) => {
     if (error) {
         return;
     }
+    for (var container of stderr.split(" \n")) {
+        var [type, container_name, state] = container.split(" ").slice(1, 4);
 
-    localdatabase.exec(`
-        UPDATE infrastructure_component
-        SET alive = false;
-    `)
+        if((state == "Running" || state == "Started") && container_name.replaceAll("", "").length > 0) {
+            localdatabase.exec(`    
+                UPDATE infrastructure_component
+                SET alive = true
+                WHERE service_key = '${container_name}';
+            `)
+        }
+    }
 })
 
 const kc = new k8s.KubeConfig();
@@ -173,7 +179,6 @@ kc.loadFromDefault({
 });
 
 const watch = new k8s.Watch(kc);
-
 const dockerode = new Docker();
 
 async function createKs8(socket: any, io: any) {
@@ -181,9 +186,8 @@ async function createKs8(socket: any, io: any) {
     const queryParams = { allowWatchBookmarks: true };
     const callback = (phase: any, apiObj: KubernetesPod) => {
         if (apiObj.metadata.name) {
-            console.log(apiObj.metadata.name);
-
             const application: any[] = localdatabase.prepare(`select * from application where name = '${apiObj.metadata.name.split("-")[0]}'`).all() as any[];
+            
             var shortLog = `${phase} - ${apiObj.metadata.name.split("-")[0]} - ${apiObj.status.phase}`;
 
             if (application.length > 0) {

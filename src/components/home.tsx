@@ -201,6 +201,8 @@ export default function Home({
             })
 
             socket.on("update-state-resource", (message: { resource: string; state: string }) => {
+                console.log(`==> state: ${message.resource} \n state: ${message.state}`);
+                
                 var infrastructureComponent = infrastructureComponentsSource.filter(x => x.service_key == message.resource)[0];
                 var application = applicationsSource.filter(x => x.name == message.resource)[0];
 
