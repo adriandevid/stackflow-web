@@ -1,6 +1,7 @@
 'use server';
 
 import { localdatabase } from "@pedreiro-web/infrastructure/database/config";
+import InfrastructureComponentRepository from "@pedreiro-web/infrastructure/repository/infrastructure-component";
 import { InfrastructureComponent } from "@pedreiro-web/infrastructure/repository/types/infrastructure-component";
 import { dockerControlPlane } from "@pedreiro-web/lib/docker";
 import { createFile, readFile } from "@pedreiro-web/util/file";
@@ -15,10 +16,9 @@ export default async function DeleteInfrastructureComponent(prev: any, body: { i
 
     const infrastructureComponentResult: InfrastructureComponent = row[0] as InfrastructureComponent;
 
-    localdatabase.exec(`
-        DELETE FROM infrastructure_component
-        WHERE id = ${body.id};
-    `)
+    const infrastructureComponentRepository = new InfrastructureComponentRepository();
+    
+    infrastructureComponentRepository.delete(body.id);
 
     localdatabase.exec(`
         DELETE FROM stream

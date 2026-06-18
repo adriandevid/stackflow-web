@@ -1,14 +1,31 @@
 import { normalizeQuery } from "@pedreiro-web/util/normalizeQuery"
-import { InfrastructureComponentUpdate } from "../types/infrastructure-component"
+import { InfrastructureComponentCreate, InfrastructureComponentFile, InfrastructureComponentUpdate } from "../types/infrastructure-component"
 import { localdatabase } from "@pedreiro-web/infrastructure/database/config";
-import { Database } from 'better-sqlite3'
 import Respository from "../base/repository";
 
 export default class InfrastructureComponentRepository extends Respository {
 
+    insert(params: InfrastructureComponentCreate) {
+        return this.executeOperation(
+            () => localdatabase.exec(normalizeQuery(`
+                    insert into infrastructure_component(service_key, image, container_name, entrypoint, command, position_x, position_y, type, alive, configuration_id)
+                    values ('${params.service_key}', '${params.image}', '${params.container_name}', '${params.entrypoint}', '${params.command}', ${params.position_x}, ${params.position_y}, '${params.type}', false, 1)
+                `))
+        )
+    }
+
+    delete(id: number) {
+        return this.executeOperation(() =>
+            localdatabase.exec(`
+                DELETE FROM infrastructure_component
+                WHERE id = ${id};
+            `)
+        );
+    }
+
     update(params: InfrastructureComponentUpdate) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(`
                     UPDATE infrastructure_component
                     SET service_key = '${params.service_key}', image = '${params.image}', container_name= '${params.container_name}',
@@ -20,7 +37,7 @@ export default class InfrastructureComponentRepository extends Respository {
 
     active(id: number) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(`
                     UPDATE infrastructure_component
                     SET alive = true
@@ -31,19 +48,19 @@ export default class InfrastructureComponentRepository extends Respository {
 
     deactive(id: number) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(`
                     UPDATE infrastructure_component
                     SET alive = false
                     WHERE id = ${id};
                 `)
         )
-        
+
     }
 
     updateVolume(id: number, volume: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     UPDATE infrastructure_component_volumes
                     SET volume = '${volume}'
@@ -54,7 +71,7 @@ export default class InfrastructureComponentRepository extends Respository {
 
     insertVolume(infrastructureId: number, volume: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     insert into infrastructure_component_volumes(volume, infrastructure_component_id)
                     values ('${volume}', ${infrastructureId})
@@ -64,8 +81,8 @@ export default class InfrastructureComponentRepository extends Respository {
 
     deleteVolume(id: number) {
         return this.executeOperation(
-            () => 
-                 localdatabase.exec(`
+            () =>
+                localdatabase.exec(`
                     DELETE FROM infrastructure_component_volumes
                     WHERE id = ${id};
                 `)
@@ -74,86 +91,96 @@ export default class InfrastructureComponentRepository extends Respository {
 
     deleteFile(id: number) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(`
                     DELETE FROM infrastructure_component_file
                     WHERE id = ${id};
                 `)
         )
-        
+
     }
 
     insertFile(infrastructureId: number, fileName: string, file: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(`
                     insert into infrastructure_component_file(name, file, infrastructure_component_id)
                     values ('${fileName}', '${file}', ${infrastructureId})    
                 `)
         )
-        
+
+    }
+
+    updateFile(params: InfrastructureComponentFile) {
+        return this.executeOperation(() => 
+            localdatabase.exec(`
+                update infrastructure_component_file
+                set name = '${params.name}', file = '${params.file}'
+                where id = ${params.id}
+            `)
+        )
     }
 
     insertCommand(infrastructureId: number, command: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     insert into infrastructure_component_command(command, infrastructure_component_id)
                     values ('${command}', ${infrastructureId})
                 `))
         )
-        
+
     }
 
     updateCommand(id: number, command: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     UPDATE infrastructure_component_command
                     SET command = '${command}'
                     where id = ${id}
                 `))
         )
-        
+
     }
 
     deleteCommand(id: number) {
         return this.executeOperation(
-            () => 
-                 localdatabase.exec(`
+            () =>
+                localdatabase.exec(`
                         DELETE FROM infrastructure_component_command
                         WHERE id = ${id};
                     `)
         )
-       
+
     }
 
     updatePortBind(id: number, port_bind: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     UPDATE infrastructure_component_port
                     SET port_bind = '${port_bind}'
                     where id = ${id}
                 `))
         )
-        
+
     }
 
     deletePortBind(id: number) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(`
                     DELETE FROM infrastructure_component_port
                     WHERE id = ${id};
                 `)
         )
-        
+
     }
 
     insertPortBind(infrastructureId: number, port_bind: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     insert into infrastructure_component_port(port_bind, infrastructure_component_id)
                     values ('${port_bind}', ${infrastructureId})
@@ -163,7 +190,7 @@ export default class InfrastructureComponentRepository extends Respository {
 
     updateNetwork(id: number, network: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     UPDATE infrastructure_component_network
                     SET network = '${network}'
@@ -174,86 +201,86 @@ export default class InfrastructureComponentRepository extends Respository {
 
     deleteNetwork(id: number) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(`
                     DELETE FROM infrastructure_component_network
                     WHERE id = ${id};
                 `)
         )
-       
+
     }
 
     insertNetwork(infrastructureId: number, networkName: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     insert into infrastructure_component_network(network, infrastructure_component_id)
                     values ('${networkName}', ${infrastructureId})
                 `))
         )
-        
+
     }
 
     updateLabel(id: number, label: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     UPDATE infrastructure_component_labels
                     SET label = '${label}'
                     where id = ${id}
                 `))
         )
-        
+
     }
 
     deleteLabel(id: number) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(`
                     DELETE FROM infrastructure_component_labels
                     WHERE id = ${id};
                 `)
         )
-        
+
     }
 
     insertLabel(infrastructureId: number, label: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     insert into infrastructure_component_labels(label, infrastructure_component_id)
                     values ('${label}', ${infrastructureId})
                 `))
         )
-        
+
     }
 
     updateEnvironmentVariable(id: number, environmentName: string, environmentValue: string) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     UPDATE infrastructure_component_environment
                     SET environment_name = '${environmentName}', environment_value = '${environmentValue}'
                     where id = ${id}
                 `))
         )
-        
+
     }
 
     deleteEnvironmentVariable(id: number) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(`
                     DELETE FROM infrastructure_component_environment
                     WHERE id = ${id};
                 `)
         )
-        
+
     }
 
     insertEnvironmentVariable(name: string, value: string, infrastructureId: number) {
         return this.executeOperation(
-            () => 
+            () =>
                 localdatabase.exec(normalizeQuery(`
                     insert into infrastructure_component_environment(environment_name, environment_value, infrastructure_component_id)
                     values ('${name}', '${value}', ${infrastructureId})

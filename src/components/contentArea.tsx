@@ -265,7 +265,7 @@ export default function ContentArea({
     }
 
     useEffect(function () {
-        if (stateStopInfrastructureComponent && stateStopInfrastructureComponent.status == 200) {
+        if (stateStopInfrastructureComponent) {
             isLoading(false);
             setStopOperationLoading(false);
             setIsDeploying(false);

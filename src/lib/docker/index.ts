@@ -18,6 +18,10 @@ export class DockerControlPlane {
     getCommand(operation: string, service_key: string) {
         var command = this.dockerBaseCommand.replace("%operation", operation);
         command = command.replace("%service_key", service_key);
+        
+        if(operation == "down") {
+            command = command.replace("-d", "");
+        }
 
         return command;
     }
@@ -26,7 +30,7 @@ export class DockerControlPlane {
         return new Promise<boolean>((resolve, reject) => {
             exec(command, (error: ExecException | null, stdout: string, stderr: string) => {
                 if (error) {
-                    reject(false);
+                    resolve(false);
                     return;
                 }
                 resolve(true);
